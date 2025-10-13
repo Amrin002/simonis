@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->date('tanggal');
             $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
-            $table->string('mata_pelajaran');
+            $table->string('mata_pelajaran')->nullable();
             $table->decimal('presentase_kehadiran', 5, 2)->default(0);
             $table->timestamps();
         });

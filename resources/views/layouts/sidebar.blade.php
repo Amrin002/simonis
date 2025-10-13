@@ -11,6 +11,12 @@
                 <i class="fas fa-home"></i> Dashboard
             </a>
         </li>
+        <li>
+            <a href="{{ route('guru.absensi.index') }}"
+                class="menu-link {{ request()->routeIs('guru.dashboard') ? 'active' : '' }}">
+                <i class="fas fa-clipboard-check"></i> Absensi
+            </a>
+        </li>
 
         {{-- Menu untuk Guru Mapel --}}
         @if(Auth::user()->guru->isGuruMapel())
@@ -73,11 +79,7 @@
                 <i class="fas fa-user"></i> Profil Saya
             </a>
         </li>
-        <li>
-            <a href="#" class="menu-link {{ request()->routeIs('guru.pengaturan') ? 'active' : '' }}">
-                <i class="fas fa-cog"></i> Pengaturan
-            </a>
-        </li>
+
     </ul>
 </div>
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AbsensiGuruController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalGuruController;
@@ -109,9 +110,28 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     // Kelas Wali - Hanya untuk Wali Kelas
     Route::get('/kelas-wali', [GuruController::class, 'detailKelasWali'])->name('kelas-wali');
 
-    // Jadwal Mengajar - Hanya untuk Guru Mapel
-    Route::get('/jadwal-mengajar', [GuruController::class, 'jadwalMengajar'])->name('jadwal-mengajar');
+    // Absensi Routes (untuk semua guru)
+    Route::prefix('absensi')->name('absensi.')->group(function () {
+        // Index & Detail (untuk semua guru)
+        Route::get('/', [AbsensiGuruController::class, 'index'])->name('index');
+        Route::get('/{id}', [AbsensiGuruController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AbsensiGuruController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AbsensiGuruController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AbsensiGuruController::class, 'destroy'])->name('destroy');
 
+        // Routes khusus Wali Kelas
+        Route::middleware('role:guru,walikelas')->group(function () {
+            Route::get('/wali-kelas/create', [AbsensiGuruController::class, 'createWaliKelas'])->name('create-wali-kelas');
+            Route::post('/wali-kelas/store', [AbsensiGuruController::class, 'storeWaliKelas'])->name('store-wali-kelas');
+        });
+
+        // Routes khusus Guru Mapel
+        Route::middleware('role:guru,gurumapel')->group(function () {
+            Route::get('/guru-mapel/select', [AbsensiGuruController::class, 'selectKelasMapel'])->name('select-kelas-mapel');
+            Route::get('/guru-mapel/create', [AbsensiGuruController::class, 'createGuruMapel'])->name('create-guru-mapel');
+            Route::post('/guru-mapel/store', [AbsensiGuruController::class, 'storeGuruMapel'])->name('store-guru-mapel');
+        });
+    });
     // Daftar Siswa - Hanya untuk Guru Mapel
     Route::get('/daftar-siswa', [GuruController::class, 'daftarSiswa'])->name('daftar-siswa');
 

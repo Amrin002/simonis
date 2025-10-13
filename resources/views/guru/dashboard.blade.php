@@ -108,7 +108,7 @@
                                 <h5 class="mb-0">
                                     <i class="fas fa-clock me-2"></i>Jadwal Mengajar Hari Ini
                                 </h5>
-                                <a href="{{ route('guru.jadwal-mengajar') }}" class="btn btn-light btn-sm">
+                                <a href="{{ route('guru.jadwal.today') }}" class="btn btn-light btn-sm">
                                     Lihat Semua <i class="fas fa-arrow-right"></i>
                                 </a>
                             </div>
