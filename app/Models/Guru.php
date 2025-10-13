@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -97,24 +98,37 @@ class Guru extends Model
      */
     public function getRoleLabelAttribute(): string
     {
-        if ($this->is_wali_kelas && $this->is_guru_mapel) {
-            return 'Wali Kelas & Guru Mapel';
-        } elseif ($this->is_wali_kelas) {
+        if ($this->isWaliKelas() && $this->isGuruMapel()) {
+            return 'Wali Kelas & Guru Mata Pelajaran';
+        } elseif ($this->isWaliKelas()) {
             return 'Wali Kelas';
-        } elseif ($this->is_guru_mapel) {
-            return 'Guru Mapel';
+        } elseif ($this->isGuruMapel()) {
+            return 'Guru Mata Pelajaran';
         }
         return 'Guru';
     }
 
     /**
-     * Get nama kelas yang diampu (untuk wali kelas)
+     * Get nama kelas wali
      */
-    public function getNamaKelasWaliAttribute(): ?string
+    public function getNamaKelasWaliAttribute(): string
     {
-        return $this->kelasWali?->nama;
+        return $this->kelasWali ? $this->kelasWali->nama : '-';
     }
 
+    /**
+     * Get sambutan untuk dashboard
+     */
+    public function getSambutanDashboardAttribute(): string
+    {
+        if ($this->isWaliKelas() && $this->isGuruMapel()) {
+            return "Selamat datang {$this->nama_guru}, Wali Kelas {$this->namaKelasWali}";
+        } elseif ($this->isWaliKelas()) {
+            return "Selamat datang Wali Kelas {$this->namaKelasWali}";
+        } else {
+            return "Selamat datang {$this->nama_guru}";
+        }
+    }
     /**
      * Get daftar nama mapel yang diajar
      */
@@ -128,13 +142,16 @@ class Guru extends Model
      */
     public function getJadwalHariIni()
     {
-        $hari = now()->locale('id')->dayName;
+        Carbon::setLocale('id');
+        $hariIni = Carbon::now()->isoFormat('dddd');
+
         return $this->jadwals()
-            ->where('hari', $hari)
             ->with(['mapel', 'kelas'])
+            ->where('hari', $hariIni)
             ->orderBy('waktu_mulai')
             ->get();
     }
+
 
     /**
      * Get jumlah siswa di kelas wali

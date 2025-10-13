@@ -8,90 +8,180 @@ use App\Models\Guru;
 use App\Models\Jadwal;
 use App\Models\Kelas;
 use App\Models\Siswa;
+use Carbon\Carbon;
 
 class GuruController extends Controller
 {
     public function dashboard()
     {
-        $guru = Auth::user()->guru;
+        $user = Auth::user();
+        $guru = $user->guru;
 
-        // Data umum untuk semua guru
+        // Validasi: pastikan guru ada
+        if (!$guru) {
+            return redirect()->route('login')
+                ->with('error', 'Data guru tidak ditemukan. Hubungi administrator.');
+        }
+
+        $title = 'Dashboard Guru';
+
+        // Set lokalisasi ke Indonesia untuk nama hari
+        Carbon::setLocale('id');
+        $hariIni = Carbon::now()->isoFormat('dddd');
+
+        // Data umum untuk semua tipe guru
         $data = [
+            'title' => $title,
             'guru' => $guru,
-            'isWaliKelas' => $guru->isWaliKelas(),
-            'isGuruMapel' => $guru->isGuruMapel(),
+            'hariIni' => $hariIni,
+            'tanggalHariIni' => Carbon::now()->isoFormat('D MMMM YYYY'),
         ];
 
-        // Data khusus wali kelas
-        if ($guru->isWaliKelas()) {
-            $data['kelasWali'] = $guru->kelasWali;
-            $data['jumlahSiswa'] = $guru->kelasWali ? $guru->kelasWali->siswas->count() : 0;
-            $data['siswaList'] = $guru->getSiswaKelasWali();
+        // Data khusus Guru Mapel
+        if ($guru->isGuruMapel()) {
+            $data['jumlahMapel'] = $guru->mapels()->count();
+            $data['jumlahKelasMapel'] = $guru->jadwals()->distinct('kelas_id')->count('kelas_id');
+            $data['jadwalHariIni'] = $guru->getJadwalHariIni();
+            $data['jadwalMingguIni'] = $this->getJadwalMingguIni($guru);
         }
 
-        // Data khusus guru mapel
-        if ($guru->isGuruMapel()) {
-            $data['mapelDiajar'] = $guru->mapels;
-            $data['jadwalMengajar'] = $guru->jadwals()
-                ->with(['mapel', 'kelas'])
-                ->orderBy('hari')
-                ->orderBy('waktu_mulai')
-                ->get();
-            $data['jumlahMapel'] = $guru->mapels->count();
+        // Data khusus Wali Kelas
+        if ($guru->isWaliKelas()) {
+            $kelasWali = $guru->kelasWali;
+            $data['kelasWali'] = $kelasWali;
+            $data['jumlahSiswaKelas'] = $kelasWali ? $kelasWali->siswas()->count() : 0;
+            $data['siswaTerbaru'] = $kelasWali ? $kelasWali->siswas()->latest()->take(5)->get() : collect();
         }
+
+        // Statistik gabungan
+        $data['totalJadwalMingguIni'] = $guru->jadwals()->count();
+        $data['jadwalHariIniCount'] = $guru->getJadwalHariIni()->count();
 
         return view('guru.dashboard', $data);
     }
 
-    // Untuk Wali Kelas - Kelola Siswa di Kelasnya
-    public function kelolaKelas()
+    /**
+     * Get jadwal mengajar untuk minggu ini
+     */
+    private function getJadwalMingguIni($guru)
     {
-        $guru = Auth::user()->guru;
+        $daftarHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+        return $guru->jadwals()
+            ->with(['mapel', 'kelas'])
+            ->whereIn('hari', $daftarHari)
+            ->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")
+            ->orderBy('waktu_mulai')
+            ->get()
+            ->groupBy('hari');
+    }
+
+    /**
+     * Lihat detail kelas wali
+     */
+    public function detailKelasWali()
+    {
+        $user = Auth::user();
+        $guru = $user->guru;
 
         if (!$guru->isWaliKelas()) {
             return redirect()->route('guru.dashboard')
                 ->with('error', 'Anda bukan wali kelas');
         }
 
-        $kelas = $guru->kelasWali()->with('siswas')->first();
+        $kelasWali = $guru->kelasWali;
+        $siswas = $kelasWali->siswas()->orderBy('nama')->get();
 
-        return view('guru.kelas.index', compact('kelas'));
+        return view('guru.kelas-wali', [
+            'title' => 'Kelas Wali - ' . $kelasWali->nama,
+            'kelas' => $kelasWali,
+            'siswas' => $siswas,
+            'guru' => $guru
+        ]);
     }
 
-    // Untuk Guru Mapel - Kelola Jadwal & Nilai
+    /**
+     * Lihat jadwal mengajar
+     */
     public function jadwalMengajar()
     {
-        $guru = Auth::user()->guru;
+        $user = Auth::user();
+        $guru = $user->guru;
 
         if (!$guru->isGuruMapel()) {
             return redirect()->route('guru.dashboard')
-                ->with('error', 'Anda bukan guru mapel');
+                ->with('error', 'Anda bukan guru mata pelajaran');
         }
 
         $jadwals = $guru->jadwals()
             ->with(['mapel', 'kelas'])
-            ->orderBy('hari')
+            ->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")
             ->orderBy('waktu_mulai')
-            ->get();
+            ->get()
+            ->groupBy('hari');
 
-        return view('guru.jadwal.index', compact('jadwals'));
+        return view('guru.jadwal-mengajar', [
+            'title' => 'Jadwal Mengajar',
+            'jadwals' => $jadwals,
+            'guru' => $guru,
+            'mapels' => $guru->mapels
+        ]);
     }
 
-    // Untuk Guru Mapel - Input Absen
-    public function absensi()
+    /**
+     * Lihat daftar siswa untuk guru mapel
+     */
+    public function daftarSiswa()
     {
-        $guru = Auth::user()->guru;
+        $user = Auth::user();
+        $guru = $user->guru;
 
         if (!$guru->isGuruMapel()) {
             return redirect()->route('guru.dashboard')
-                ->with('error', 'Anda bukan guru mapel');
+                ->with('error', 'Anda bukan guru mata pelajaran');
         }
 
-        $jadwalHariIni = $guru->jadwals()
-            ->where('hari', now()->locale('id')->dayName)
-            ->with(['mapel', 'kelas.siswas'])
+        // Ambil semua kelas yang diajar
+        $kelasIds = $guru->jadwals()->distinct('kelas_id')->pluck('kelas_id');
+        $kelasList = Kelas::whereIn('id', $kelasIds)
+            ->with(['siswas' => function ($query) {
+                $query->orderBy('nama');
+            }])
             ->get();
 
-        return view('guru.absensi.index', compact('jadwalHariIni'));
+        return view('guru.daftar-siswa', [
+            'title' => 'Daftar Siswa',
+            'kelasList' => $kelasList,
+            'guru' => $guru
+        ]);
+    }
+
+    /**
+     * Update profile guru
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $guru = $user->guru;
+
+        $request->validate([
+            'nama_guru' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'no_telepon' => 'nullable|string|max:15',
+        ]);
+
+        // Update user
+        $user->update([
+            'name' => $request->nama_guru,
+            'email' => $request->email,
+        ]);
+
+        // Update guru (sesuaikan dengan kolom di tabel gurus)
+        $guru->update([
+            'nama_guru' => $request->nama_guru,
+            // 'no_telepon' => $request->no_telepon, // Uncomment jika ada kolom ini
+        ]);
+
+        return redirect()->back()->with('success', 'Profile berhasil diupdate');
     }
 }

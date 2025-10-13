@@ -12,10 +12,7 @@ class Jadwal extends Model
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'waktu_mulai' => 'datetime:H:i',
-        'waktu_selesai' => 'datetime:H:i',
-    ];
+    protected $casts = [];
 
     /**
      * Get kelas untuk jadwal ini

@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GuruController;
+use App\Http\Controllers\JadwalGuruController;
 use App\Http\Controllers\OrangtuaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -88,12 +90,48 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::put('/{id}', [AdminController::class, 'updateMapel'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'destroyMapel'])->name('destroy');
     });
+    // User Management
+    Route::resource('users', UserController::class);
+    Route::post('users/{id}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+
+    // Bulk Create Users
+    Route::get('users/bulk/guru', [UserController::class, 'bulkCreateGuru'])->name('users.bulk-guru');
+    Route::post('users/bulk/guru', [UserController::class, 'bulkStoreGuru'])->name('users.bulk-guru.store');
+    Route::get('users/bulk/orangtua', [UserController::class, 'bulkCreateOrangTua'])->name('users.bulk-orangtua');
+    Route::post('users/bulk/orangtua', [UserController::class, 'bulkStoreOrangTua'])->name('users.bulk-orangtua.store');
 });
 
-// Routes untuk Guru
+/// Routes untuk Guru
 Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(function () {
+    // Dashboard - Accessible oleh semua guru
     Route::get('/dashboard', [GuruController::class, 'dashboard'])->name('dashboard');
-    // Tambahkan route lain untuk guru di sini nanti
+
+    // Kelas Wali - Hanya untuk Wali Kelas
+    Route::get('/kelas-wali', [GuruController::class, 'detailKelasWali'])->name('kelas-wali');
+
+    // Jadwal Mengajar - Hanya untuk Guru Mapel
+    Route::get('/jadwal-mengajar', [GuruController::class, 'jadwalMengajar'])->name('jadwal-mengajar');
+
+    // Daftar Siswa - Hanya untuk Guru Mapel
+    Route::get('/daftar-siswa', [GuruController::class, 'daftarSiswa'])->name('daftar-siswa');
+
+    // Profile
+    Route::patch('/profile', [GuruController::class, 'updateProfile'])->name('profile.update');
+
+
+    // Guru Mapel
+    // Jadwal Routes (Read-only untuk Guru)
+    Route::prefix('jadwal')->name('jadwal.')->group(function () {
+        Route::get('/', [JadwalGuruController::class, 'index'])->name('index');
+        Route::get('/today', [JadwalGuruController::class, 'today'])->name('today');
+        Route::get('/hari/{hari}', [JadwalGuruController::class, 'byDay'])->name('by-day');
+        Route::get('/kelas/{kelasId}', [JadwalGuruController::class, 'byKelas'])->name('by-kelas');
+        Route::get('/weekly-summary', [JadwalGuruController::class, 'weeklySummary'])->name('weekly-summary');
+        Route::get('/calendar', [JadwalGuruController::class, 'calendar'])->name('calendar');
+        //Route::get('/export-pdf', [JadwalGuruController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/print', [JadwalGuruController::class, 'print'])->name('print');
+        Route::get('/{id}', [JadwalGuruController::class, 'show'])->name('show');
+    });
 });
 
 // Routes untuk Orangtua

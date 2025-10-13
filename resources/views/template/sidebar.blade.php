@@ -45,6 +45,12 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('admin.users.index') }}"
+                class="menu-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <i class="fas fa-user-cog"></i> Manajemen User
+            </a>
+        </li>
+        <li>
             <a href="#" class="menu-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
                 <i class="fas fa-chart-bar"></i> Laporan
             </a>
