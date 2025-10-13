@@ -34,6 +34,13 @@ class Kelas extends Model
     {
         return $this->hasMany(Jadwal::class, 'kelas_id');
     }
+    /**
+     * Get pelanggaran di kelas ini
+     */
+    public function pelanggarans()
+    {
+        return $this->hasMany(Pelanggaran::class, 'kelas_id');
+    }
 
     // ========== ACCESSORS ==========
 
@@ -105,6 +112,72 @@ class Kelas extends Model
     public function getJumlahJadwalAttribute(): int
     {
         return $this->jadwals()->count();
+    }
+
+    // ========== PELANGGARAN HELPERS ==========
+
+    /**
+     * Get jumlah pelanggaran di kelas ini
+     */
+    public function getJumlahPelanggaranAttribute(): int
+    {
+        return $this->pelanggarans()->count();
+    }
+
+    /**
+     * Get pelanggaran berdasarkan kategori
+     */
+    public function getPelanggaranByKategori(string $kategori): int
+    {
+        return $this->pelanggarans()->where('kategori', $kategori)->count();
+    }
+
+    /**
+     * Get pelanggaran ringan
+     */
+    public function getPelanggaranRinganAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Ringan');
+    }
+
+    /**
+     * Get pelanggaran sedang
+     */
+    public function getPelanggaranSedangAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Sedang');
+    }
+
+    /**
+     * Get pelanggaran berat
+     */
+    public function getPelanggaranBeratAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Berat');
+    }
+
+    /**
+     * Get pelanggaran bulan ini
+     */
+    public function getPelanggaranBulanIni()
+    {
+        return $this->pelanggarans()
+            ->whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month)
+            ->orderBy('tanggal', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get siswa dengan pelanggaran terbanyak
+     */
+    public function getSiswaWithMostPelanggaran($limit = 5)
+    {
+        return $this->siswas()
+            ->withCount('pelanggarans')
+            ->orderBy('pelanggarans_count', 'desc')
+            ->limit($limit)
+            ->get();
     }
 
     // /**

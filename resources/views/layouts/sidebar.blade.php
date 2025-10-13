@@ -30,8 +30,8 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('guru.daftar-siswa') }}"
-                    class="menu-link {{ request()->routeIs('guru.daftar-siswa') ? 'active' : '' }}">
+                <a href="{{ route('guru.siswa.index') }}"
+                    class="menu-link {{ request()->routeIs('guru.siswa.*') ? 'active' : '' }}">
                     <i class="fas fa-user-graduate"></i> Daftar Siswa
                 </a>
             </li>
@@ -59,7 +59,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="menu-link {{ request()->routeIs('guru.pelanggaran.*') ? 'active' : '' }}">
+                <a href="{{ route('guru.pelanggaran.index') }}" class="menu-link {{ request()->routeIs('guru.pelanggaran.*') ? 'active' : '' }}">
                     <i class="fas fa-exclamation-triangle"></i> Pelanggaran Siswa
                 </a>
             </li>

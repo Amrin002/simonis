@@ -5,7 +5,10 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalGuruController;
 use App\Http\Controllers\OrangtuaController;
+use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SiswaGuruController;
+use App\Http\Controllers\SiswaWaliKelasController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -151,6 +154,23 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         //Route::get('/export-pdf', [JadwalGuruController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/print', [JadwalGuruController::class, 'print'])->name('print');
         Route::get('/{id}', [JadwalGuruController::class, 'show'])->name('show');
+    });
+
+    // Daftar Siswa (Wali Kelas - Read Only)
+    Route::prefix('siswa')->name('siswa.')->group(function () {
+        Route::get('/', [SiswaGuruController::class, 'index'])->name('index');
+        Route::get('/{id}', [SiswaGuruController::class, 'show'])->name('show');
+    });
+
+    // Pelanggaran (Wali Kelas - CRUD)
+    Route::prefix('pelanggaran')->name('pelanggaran.')->group(function () {
+        Route::get('/', [PelanggaranController::class, 'index'])->name('index');
+        Route::get('/create', [PelanggaranController::class, 'create'])->name('create');
+        Route::post('/', [PelanggaranController::class, 'store'])->name('store');
+        Route::get('/{id}', [PelanggaranController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PelanggaranController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PelanggaranController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PelanggaranController::class, 'destroy'])->name('destroy');
     });
 });
 

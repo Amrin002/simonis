@@ -72,6 +72,13 @@ class Guru extends Model
     {
         return $this->is_guru_mapel;
     }
+    /**
+     * Get pelanggaran yang ditangani wali kelas
+     */
+    public function pelanggarans()
+    {
+        return $this->hasMany(Pelanggaran::class, 'wali_kelas_id');
+    }
 
     /**
      * Get siswa di kelas yang diampu (untuk wali kelas)
@@ -159,6 +166,48 @@ class Guru extends Model
     public function getJumlahSiswaKelasWali(): int
     {
         return $this->kelasWali?->siswas()->count() ?? 0;
+    }
+
+    // ========== PELANGGARAN HELPERS ==========
+
+    /**
+     * Get jumlah pelanggaran yang ditangani
+     */
+    public function getJumlahPelanggaranAttribute(): int
+    {
+        return $this->pelanggarans()->count();
+    }
+
+    /**
+     * Get pelanggaran berdasarkan kategori
+     */
+    public function getPelanggaranByKategori(string $kategori): int
+    {
+        return $this->pelanggarans()->where('kategori', $kategori)->count();
+    }
+
+    /**
+     * Get pelanggaran bulan ini
+     */
+    public function getPelanggaranBulanIni()
+    {
+        return $this->pelanggarans()
+            ->whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month)
+            ->orderBy('tanggal', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get total pelanggaran di kelas wali
+     */
+    public function getTotalPelanggaranKelasWali(): int
+    {
+        if (!$this->isWaliKelas() || !$this->kelasWali) {
+            return 0;
+        }
+
+        return Pelanggaran::where('kelas_id', $this->kelasWali->id)->count();
     }
     /**
      * Get pelanggaran yang ditangani wali kelas

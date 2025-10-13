@@ -26,6 +26,13 @@ class Siswa extends Model
     {
         return $this->belongsTo(OrangTua::class, 'orang_tua_id');
     }
+    /**
+     * Get pelanggaran siswa
+     */
+    public function pelanggarans()
+    {
+        return $this->hasMany(Pelanggaran::class, 'siswa_id');
+    }
 
     // ========== ACCESSORS ==========
 
@@ -109,6 +116,68 @@ class Siswa extends Model
     public function hasSiblings(): bool
     {
         return $this->siblings->count() > 0;
+    }
+
+    // ========== PELANGGARAN HELPERS ==========
+
+    /**
+     * Get jumlah pelanggaran
+     */
+    public function getJumlahPelanggaranAttribute(): int
+    {
+        return $this->pelanggarans()->count();
+    }
+
+    /**
+     * Get jumlah pelanggaran berdasarkan kategori
+     */
+    public function getPelanggaranByKategori(string $kategori): int
+    {
+        return $this->pelanggarans()->where('kategori', $kategori)->count();
+    }
+
+    /**
+     * Get pelanggaran ringan
+     */
+    public function getPelanggaranRinganAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Ringan');
+    }
+
+    /**
+     * Get pelanggaran sedang
+     */
+    public function getPelanggaranSedangAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Sedang');
+    }
+
+    /**
+     * Get pelanggaran berat
+     */
+    public function getPelanggaranBeratAttribute(): int
+    {
+        return $this->getPelanggaranByKategori('Berat');
+    }
+
+    /**
+     * Check if siswa has pelanggaran
+     */
+    public function hasPelanggaran(): bool
+    {
+        return $this->pelanggarans()->exists();
+    }
+
+    /**
+     * Get pelanggaran bulan ini
+     */
+    public function getPelanggaranBulanIni()
+    {
+        return $this->pelanggarans()
+            ->whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month)
+            ->orderBy('tanggal', 'desc')
+            ->get();
     }
 
     /**
