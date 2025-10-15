@@ -16,7 +16,21 @@ class Guru extends Model
         'is_wali_kelas' => 'boolean',
         'is_guru_mapel' => 'boolean',
     ];
+    /**
+     * Get nama attribute (alias untuk nama_guru)
+     */
+    public function getNamaAttribute()
+    {
+        return $this->attributes['nama_guru'] ?? null;
+    }
 
+    /**
+     * Set nama attribute (alias untuk nama_guru)
+     */
+    public function setNamaAttribute($value)
+    {
+        $this->attributes['nama_guru'] = $value;
+    }
     /**
      * Get the user that owns the guru.
      */

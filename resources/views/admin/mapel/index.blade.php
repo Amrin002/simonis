@@ -34,20 +34,20 @@
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th width="5%">No</th>
-                                <th width="12%">Kode Mapel</th>
+                                <th width="5%" class="text-center">No</th>
+                                <th width="12%" class="text-center">Kode Mapel</th>
                                 <th width="25%">Nama Mata Pelajaran</th>
-                                <th width="15%">Jumlah Guru</th>
-                                <th width="15%">Jumlah Jadwal</th>
-                                <th width="13%">Status</th>
+                                <th width="15%" class="text-center">Jumlah Guru</th>
+                                <th width="15%" class="text-center">Jumlah Jadwal</th>
+                                <th width="13%" class="text-center">Status</th>
                                 <th width="15%" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($mapels as $index => $mapel)
                                 <tr>
-                                    <td>{{ $mapels->firstItem() + $index }}</td>
-                                    <td>
+                                    <td class="text-center">{{ $mapels->firstItem() + $index }}</td>
+                                    <td class="text-center">
                                         @if($mapel->kode_mapel)
                                             <span class="badge bg-primary">{{ $mapel->kode_mapel }}</span>
                                         @else
@@ -61,37 +61,37 @@
                                     <td class="text-center">
                                         @if($mapel->gurus_count > 0)
                                             <span class="badge bg-info">
-                                                <i class="fas fa-chalkboard-teacher me-1"></i>{{ $mapel->gurus_count }} Guru
+                                                <i class="fas fa-chalkboard-teacher me-1"></i>{{ $mapel->gurus_count }}
                                             </span>
                                         @else
-                                            <span class="text-muted">Belum ada guru</span>
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td class="text-center">
                                         @if($mapel->jadwals_count > 0)
                                             <span class="badge bg-success">
-                                                <i class="fas fa-calendar-alt me-1"></i>{{ $mapel->jadwals_count }} Jadwal
+                                                <i class="fas fa-calendar-alt me-1"></i>{{ $mapel->jadwals_count }}
                                             </span>
                                         @else
-                                            <span class="text-muted">Belum ada jadwal</span>
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <span class="badge bg-{{ $mapel->status_badge_color }}">
                                             {{ $mapel->status_penggunaan }}
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.mapel.show', $mapel->id) }}" class="btn btn-info btn-sm"
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ route('admin.mapel.show', $mapel->id) }}" class="btn btn-info"
                                                 title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.mapel.edit', $mapel->id) }}" class="btn btn-warning btn-sm"
+                                            <a href="{{ route('admin.mapel.edit', $mapel->id) }}" class="btn btn-warning"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Hapus"
+                                            <button type="button" class="btn btn-danger" title="Hapus"
                                                 onclick="confirmDelete({{ $mapel->id }}, '{{ $mapel->nama_matapelajaran }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -121,14 +121,85 @@
                     </table>
                 </div>
 
+                <!-- Pagination Section - Style DataTables -->
                 @if($mapels->hasPages())
-                    <div class="mt-4 d-flex justify-content-center">
-                        {{ $mapels->links() }}
+                    <div class="row mt-3">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" role="status" aria-live="polite">
+                                Showing {{ $mapels->firstItem() }} to {{ $mapels->lastItem() }} of {{ $mapels->total() }}
+                                entries
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers float-end">
+                                {{ $mapels->links('pagination::bootstrap-4') }}
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
     </div>
+
+    @push('styles')
+        <style>
+            /* DataTables Style Pagination */
+            .dataTables_info {
+                padding-top: 8px;
+                color: #6c757d;
+                font-size: 14px;
+            }
+
+            .dataTables_paginate {
+                padding-top: 0;
+            }
+
+            .pagination {
+                margin-bottom: 0;
+            }
+
+            .page-link {
+                color: #495057;
+                background-color: #fff;
+                border: 1px solid #dee2e6;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.5;
+                border-radius: 3px;
+                margin: 0 2px;
+            }
+
+            .page-link:hover {
+                color: #0056b3;
+                background-color: #e9ecef;
+                border-color: #dee2e6;
+            }
+
+            .page-item.active .page-link {
+                z-index: 3;
+                color: #fff;
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+
+            .page-item.disabled .page-link {
+                color: #6c757d;
+                pointer-events: none;
+                background-color: #fff;
+                border-color: #dee2e6;
+            }
+
+            .page-item:first-child .page-link {
+                border-top-left-radius: 3px;
+                border-bottom-left-radius: 3px;
+            }
+
+            .page-item:last-child .page-link {
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script>

@@ -17,6 +17,9 @@ class AbsensiGuruController extends Controller
     /**
      * Display absensi index (untuk semua guru)
      */
+    /**
+     * Display absensi index (untuk semua guru)
+     */
     public function index(Request $request)
     {
         $guru = Auth::user()->guru;
@@ -30,16 +33,120 @@ class AbsensiGuruController extends Controller
         // Base query
         $query = Absen::with(['kelas', 'detailAbsens']);
 
-        // Filter berdasarkan role
-        if ($guru->isWaliKelas()) {
-            // Wali kelas lihat semua absensi kelasnya
-            $query->where('kelas_id', $guru->kelas_wali_id);
+        // // ✅ DEBUG: Cek guru info LENGKAP
+        // $debugInfo = [
+        //     '=== GURU INFO ===' => [
+        //         'id' => $guru->id,
+        //         'nama (accessor)' => $guru->nama,                    // Via accessor
+        //         'nama_guru (direct)' => $guru->nama_guru,            // Direct field
+        //         'attributes' => $guru->attributes,                   // Raw attributes
+        //         'is_wali_kelas' => $guru->is_wali_kelas,
+        //         'is_guru_mapel' => $guru->is_guru_mapel,
+        //         'kelas_wali_id' => $guru->kelas_wali_id,
+        //     ],
+
+        //     '=== KONDISI CHECK ===' => [
+        //         'isWaliKelas()' => $guru->isWaliKelas(),
+        //         'isGuruMapel()' => $guru->isGuruMapel(),
+        //         'kondisi_1 (WK+GM)' => $guru->isWaliKelas() && $guru->isGuruMapel(),
+        //         'kondisi_2 (HANYA WK)' => $guru->isWaliKelas() && !$guru->isGuruMapel(),
+        //         'kondisi_3 (HANYA GM)' => !$guru->isWaliKelas() && $guru->isGuruMapel(),
+        //     ],
+        // ];
+
+        // // ✅ FILTER BERDASARKAN ROLE
+        // if ($guru->isWaliKelas() && $guru->isGuruMapel()) {
+        //     $debugInfo['=== KONDISI MASUK ==='] = 'IF 1: Wali Kelas + Guru Mapel';
+        //     $query->where('kelas_id', $guru->kelas_wali_id);
+        // } elseif ($guru->isWaliKelas()) {
+        //     $debugInfo['=== KONDISI MASUK ==='] = 'IF 2: HANYA Wali Kelas';
+        //     $query->where('kelas_id', $guru->kelas_wali_id)
+        //         ->whereNull('mata_pelajaran');
+        // } elseif ($guru->isGuruMapel()) {
+        //     $debugInfo['=== KONDISI MASUK ==='] = 'IF 3: HANYA Guru Mapel';
+        //     $kelasIds = $guru->jadwals()->pluck('kelas_id')->unique();
+        //     $query->whereIn('kelas_id', $kelasIds);
+
+        //     $mapelNames = $guru->mapels()->pluck('nama_matapelajaran');
+        //     $query->whereIn('mata_pelajaran', $mapelNames);
+        // } else {
+        //     $debugInfo['=== KONDISI MASUK ==='] = '❌ TIDAK ADA KONDISI YANG COCOK!';
+        // }
+
+        // // ✅ DEBUG: SQL Query
+        // $debugInfo['=== QUERY INFO ==='] = [
+        //     'sql' => $query->toSql(),
+        //     'bindings' => $query->getBindings(),
+        // ];
+
+        // // ✅ DEBUG: Execute query
+        // $results = $query->get();
+        // $debugInfo['=== QUERY RESULTS ==='] = [
+        //     'count' => $results->count(),
+        //     'data' => $results->toArray(),
+        // ];
+
+        // // ✅ DEBUG: Raw database check
+        // $debugInfo['=== DATABASE CHECK (RAW) ==='] = [
+        //     'total_absen_semua' => Absen::count(),
+        //     'absen_kelas_ini' => Absen::where('kelas_id', $guru->kelas_wali_id)->get()->toArray(),
+        //     'absen_harian_only' => Absen::where('kelas_id', $guru->kelas_wali_id)
+        //         ->whereNull('mata_pelajaran')
+        //         ->get()
+        //         ->toArray(),
+        // ];
+
+        // // ✅ DEBUG: Relasi check
+        // if ($guru->kelasWali) {
+        //     $debugInfo['=== RELASI KELAS WALI ==='] = [
+        //         'exists' => true,
+        //         'kelas_id' => $guru->kelasWali->id,
+        //         'kelas_nama' => $guru->kelasWali->nama,
+        //         'wali_guru_id' => $guru->kelasWali->wali_guru_id,
+        //         'sync_check' => $guru->kelasWali->wali_guru_id === $guru->id ? '✅ SYNC' : '❌ NOT SYNC',
+        //     ];
+        // } else {
+        //     $debugInfo['=== RELASI KELAS WALI ==='] = '❌ NULL - Tidak ada relasi!';
+        // }
+
+        // dd($debugInfo);
+        // ✅ FILTER BERDASARKAN ROLE
+        if ($guru->isWaliKelas() && $guru->isGuruMapel()) {
+            // ✅ Wali Kelas + Guru Mapel: Lihat SEMUA absensi kelasnya
+            $kelasWali = $guru->kelasWali;
+            $kelasWaliId = $kelasWali ? $kelasWali->id : null;
+
+            // Ambil semua kelas yang dia ajar sebagai guru mapel
+            $kelasMapelIds = $guru->jadwals()->pluck('kelas_id')->unique()->toArray();
+
+            // Ambil nama mapel yang dia ajar
+            $mapelNames = $guru->mapels()->pluck('nama_matapelajaran')->toArray();
+
+            $query->where(function ($q) use ($kelasWaliId, $kelasMapelIds, $mapelNames) {
+                // Kondisi 1: Semua absensi di kelas yang dia walikan
+                if ($kelasWaliId) {
+                    $q->orWhere('kelas_id', $kelasWaliId);
+                }
+
+                // Kondisi 2: Absensi mapel yang dia ajar di kelas lain
+                if (!empty($kelasMapelIds) && !empty($mapelNames)) {
+                    $q->orWhere(function ($subQ) use ($kelasMapelIds, $mapelNames) {
+                        $subQ->whereIn('kelas_id', $kelasMapelIds)
+                            ->whereIn('mata_pelajaran', $mapelNames);
+                    });
+                }
+            });
+        } elseif ($guru->isWaliKelas()) {
+            // ✅ HANYA Wali Kelas: Lihat absensi harian (mata_pelajaran = null)
+            $kelasWali = $guru->kelasWali;
+            if ($kelasWali) {
+                $query->where('kelas_id', $kelasWali->id);
+            }
         } elseif ($guru->isGuruMapel()) {
-            // ✅ PERBAIKAN: Guru mapel HANYA lihat absensi mapel yang diajar
+            // ✅ HANYA Guru Mapel: Lihat absensi mapel yang diajar
             $kelasIds = $guru->jadwals()->pluck('kelas_id')->unique();
             $query->whereIn('kelas_id', $kelasIds);
 
-            // ✅ HAPUS orWhereNull - guru mapel tidak boleh lihat absensi harian
             $mapelNames = $guru->mapels()->pluck('nama_matapelajaran');
             $query->whereIn('mata_pelajaran', $mapelNames);
         }

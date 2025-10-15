@@ -48,20 +48,20 @@
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th width="5%">No</th>
+                                <th width="5%" class="text-center">No</th>
                                 <th width="15%">Nama</th>
                                 <th width="15%">Email</th>
-                                <th width="10%">Role</th>
+                                <th width="10%" class="text-center">Role</th>
                                 <th width="20%">Linked To</th>
-                                <th width="12%">Status</th>
-                                <th width="13%">Dibuat</th>
+                                <th width="12%" class="text-center">Status</th>
+                                <th width="13%" class="text-center">Dibuat</th>
                                 <th width="10%" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($users as $index => $user)
                                 <tr>
-                                    <td>{{ $users->firstItem() + $index }}</td>
+                                    <td class="text-center">{{ $users->firstItem() + $index }}</td>
                                     <td>
                                         <i class="fas fa-user text-primary me-2"></i>
                                         <strong>{{ $user->name }}</strong>
@@ -69,7 +69,7 @@
                                     <td>
                                         <small class="text-muted">{{ $user->email }}</small>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if($user->role === 'admin')
                                             <span class="badge bg-danger">
                                                 <i class="fas fa-user-shield me-1"></i>Admin
@@ -103,7 +103,7 @@
                                             <span class="badge bg-warning text-dark">Belum Linked</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if($user->role === 'admin')
                                             <span class="badge bg-secondary">System Admin</span>
                                         @elseif(($user->role === 'guru' && $user->guru) || ($user->role === 'orangtua' && $user->orangTua))
@@ -116,20 +116,20 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <small>{{ $user->created_at->format('d M Y') }}</small>
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-info btn-sm"
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-info"
                                                 title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm"
+                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Hapus"
+                                            <button type="button" class="btn btn-danger" title="Hapus"
                                                 onclick="confirmDelete({{ $user->id }}, '{{ $user->name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -159,14 +159,84 @@
                     </table>
                 </div>
 
+                <!-- Pagination Section - Style DataTables -->
                 @if($users->hasPages())
-                    <div class="mt-4 d-flex justify-content-center">
-                        {{ $users->links() }}
+                    <div class="row mt-3">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" role="status" aria-live="polite">
+                                Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} entries
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers float-end">
+                                {{ $users->links('pagination::bootstrap-4') }}
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
     </div>
+
+    @push('styles')
+        <style>
+            /* DataTables Style Pagination */
+            .dataTables_info {
+                padding-top: 8px;
+                color: #6c757d;
+                font-size: 14px;
+            }
+
+            .dataTables_paginate {
+                padding-top: 0;
+            }
+
+            .pagination {
+                margin-bottom: 0;
+            }
+
+            .page-link {
+                color: #495057;
+                background-color: #fff;
+                border: 1px solid #dee2e6;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.5;
+                border-radius: 3px;
+                margin: 0 2px;
+            }
+
+            .page-link:hover {
+                color: #0056b3;
+                background-color: #e9ecef;
+                border-color: #dee2e6;
+            }
+
+            .page-item.active .page-link {
+                z-index: 3;
+                color: #fff;
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+
+            .page-item.disabled .page-link {
+                color: #6c757d;
+                pointer-events: none;
+                background-color: #fff;
+                border-color: #dee2e6;
+            }
+
+            .page-item:first-child .page-link {
+                border-top-left-radius: 3px;
+                border-bottom-left-radius: 3px;
+            }
+
+            .page-item:last-child .page-link {
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script>

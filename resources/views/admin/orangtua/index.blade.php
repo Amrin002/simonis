@@ -34,19 +34,19 @@
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th width="5%">No</th>
-                                <th width="20%">Nama Orang Tua</th>
-                                <th width="15%">Nomor Telepon</th>
+                                <th width="5%" class="text-center">No</th>
+                                <th width="18%">Nama Orang Tua</th>
+                                <th width="13%">Nomor Telepon</th>
                                 <th width="25%">Alamat</th>
-                                <th width="10%">Status Akun</th>
-                                <th width="10%">Jumlah Anak</th>
+                                <th width="12%" class="text-center">Status Akun</th>
+                                <th width="12%" class="text-center">Jumlah Anak</th>
                                 <th width="15%" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($orangtuas as $index => $orangtua)
                                 <tr>
-                                    <td>{{ $orangtuas->firstItem() + $index }}</td>
+                                    <td class="text-center">{{ $orangtuas->firstItem() + $index }}</td>
                                     <td><strong>{{ $orangtua->nama_orang_tua }}</strong></td>
                                     <td>
                                         <i class="fas fa-phone text-success me-1"></i>
@@ -55,7 +55,7 @@
                                     <td>
                                         <small>{{ Str::limit($orangtua->alamat, 50) }}</small>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if($orangtua->user)
                                             <span class="badge bg-success" title="Username: {{ $orangtua->user->username }}">
                                                 <i class="fas fa-check-circle me-1"></i>Ada Akun
@@ -69,23 +69,23 @@
                                     <td class="text-center">
                                         @if($orangtua->siswas->count() > 0)
                                             <span class="badge bg-info">
-                                                <i class="fas fa-child me-1"></i>{{ $orangtua->siswas->count() }} Anak
+                                                <i class="fas fa-child me-1"></i>{{ $orangtua->siswas->count() }}
                                             </span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.orangtua.show', $orangtua->id) }}"
-                                                class="btn btn-info btn-sm" title="Detail">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ route('admin.orangtua.show', $orangtua->id) }}" class="btn btn-info"
+                                                title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.orangtua.edit', $orangtua->id) }}"
-                                                class="btn btn-warning btn-sm" title="Edit">
+                                            <a href="{{ route('admin.orangtua.edit', $orangtua->id) }}" class="btn btn-warning"
+                                                title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Hapus"
+                                            <button type="button" class="btn btn-danger" title="Hapus"
                                                 onclick="confirmDelete({{ $orangtua->id }}, '{{ $orangtua->nama_orang_tua }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -115,14 +115,85 @@
                     </table>
                 </div>
 
+                <!-- Pagination Section - Style DataTables -->
                 @if($orangtuas->hasPages())
-                    <div class="mt-4 d-flex justify-content-center">
-                        {{ $orangtuas->links() }}
+                    <div class="row mt-3">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" role="status" aria-live="polite">
+                                Showing {{ $orangtuas->firstItem() }} to {{ $orangtuas->lastItem() }} of
+                                {{ $orangtuas->total() }} entries
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers float-end">
+                                {{ $orangtuas->links('pagination::bootstrap-4') }}
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
     </div>
+
+    @push('styles')
+        <style>
+            /* DataTables Style Pagination */
+            .dataTables_info {
+                padding-top: 8px;
+                color: #6c757d;
+                font-size: 14px;
+            }
+
+            .dataTables_paginate {
+                padding-top: 0;
+            }
+
+            .pagination {
+                margin-bottom: 0;
+            }
+
+            .page-link {
+                color: #495057;
+                background-color: #fff;
+                border: 1px solid #dee2e6;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.5;
+                border-radius: 3px;
+                margin: 0 2px;
+            }
+
+            .page-link:hover {
+                color: #0056b3;
+                background-color: #e9ecef;
+                border-color: #dee2e6;
+            }
+
+            .page-item.active .page-link {
+                z-index: 3;
+                color: #fff;
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+
+            .page-item.disabled .page-link {
+                color: #6c757d;
+                pointer-events: none;
+                background-color: #fff;
+                border-color: #dee2e6;
+            }
+
+            .page-item:first-child .page-link {
+                border-top-left-radius: 3px;
+                border-bottom-left-radius: 3px;
+            }
+
+            .page-item:last-child .page-link {
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script>

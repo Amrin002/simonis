@@ -328,15 +328,15 @@ class Absen extends Model
             default => 'Unknown'
         };
     }
-
     /**
      * Get button action untuk UI
      */
     public function getButtonAction($guru): array
     {
-        // Jika wali kelas absen di kelasnya sendiri
-        if ($this->isAbsenWaliKelas($guru)) {
-            if ($this->status_rekapan === 'draft') {
+        // STATUS: DRAFT
+        if ($this->status_rekapan === 'draft') {
+            // Jika wali kelas absen di kelasnya sendiri
+            if ($this->isAbsenWaliKelas($guru)) {
                 return [
                     'text' => 'Selesai',
                     'color' => 'success',
@@ -344,29 +344,51 @@ class Absen extends Model
                     'disabled' => false
                 ];
             }
-        } else {
-            // Guru mapel
-            if ($this->status_rekapan === 'draft') {
-                return [
-                    'text' => 'Kirim ke Wali Kelas',
-                    'color' => 'primary',
-                    'action' => 'kirim',
-                    'disabled' => false
-                ];
-            } elseif ($this->status_rekapan === 'dikirim') {
-                return [
-                    'text' => 'Menunggu Wali Kelas',
-                    'color' => 'secondary',
-                    'action' => 'disabled',
-                    'disabled' => true
-                ];
-            }
+
+            // Guru mapel - kirim ke wali kelas
+            return [
+                'text' => 'Kirim ke Wali Kelas',
+                'color' => 'primary',
+                'action' => 'kirim',
+                'disabled' => false
+            ];
         }
 
-        // Jika sudah selesai
+        // STATUS: DIKIRIM (Menunggu Wali Kelas)
+        if ($this->status_rekapan === 'dikirim') {
+            // Cek apakah user adalah wali kelas dari kelas ini
+            if ($this->isAbsenWaliKelas($guru)) {
+                return [
+                    'text' => 'Selesaikan',
+                    'color' => 'success',
+                    'action' => 'selesaikan',  // ✅ ACTION BARU!
+                    'disabled' => false
+                ];
+            }
+
+            // Bukan wali kelas - disabled
+            return [
+                'text' => 'Menunggu Wali Kelas',
+                'color' => 'secondary',
+                'action' => 'disabled',
+                'disabled' => true
+            ];
+        }
+
+        // STATUS: SELESAI
+        if ($this->status_rekapan === 'selesai') {
+            return [
+                'text' => 'Sudah Selesai',
+                'color' => 'success',
+                'action' => 'disabled',
+                'disabled' => true
+            ];
+        }
+
+        // Default - Unknown status
         return [
-            'text' => 'Sudah Selesai',
-            'color' => 'success',
+            'text' => 'Unknown',
+            'color' => 'secondary',
             'action' => 'disabled',
             'disabled' => true
         ];

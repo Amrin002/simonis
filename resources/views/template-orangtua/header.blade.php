@@ -10,14 +10,14 @@
                 <i class="fas fa-chevron-down d-none d-md-inline" style="font-size: 0.8rem;"></i>
             </div>
             <div class="dropdown-menu-custom" id="userDropdownMenu">
-                <a href="{{ route('profile.edit') }}" class="dropdown-item-custom"
+                <a href="#" class="dropdown-item-custom"
                     onclick="showModal('modalUpdateProfile'); closeUserDropdown(); return false;">
                     <i class="fas fa-user-edit"></i> Update Profile
                 </a>
-                {{-- <a href="#" class="dropdown-item-custom"
+                <a href="#" class="dropdown-item-custom"
                     onclick="showModal('modalChangePassword'); closeUserDropdown(); return false;">
                     <i class="fas fa-key"></i> Ganti Password
-                </a> --}}
+                </a>
                 <div class="dropdown-divider-custom"></div>
                 <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                     @csrf

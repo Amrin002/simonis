@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Dashboard Guru' }}</title>
+    <title>{{ $title }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* CSS tetap sama seperti sebelumnya */
         :root {
             --sidebar-width: 250px;
             --header-height: 60px;
@@ -165,6 +166,14 @@
             margin: 5px 0;
         }
 
+        .dropdown-item-custom.w-100 {
+            cursor: pointer;
+        }
+
+        .dropdown-item-custom:focus {
+            outline: none;
+        }
+
         .user-info-clickable {
             cursor: pointer;
             padding: 5px 10px;
@@ -253,29 +262,14 @@
 </head>
 
 <body>
-    @include('layouts.sidebar')
+    @include('template-orangtua.sidebar')
 
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
-        @include('template.header')
+        @include('template-orangtua.header')
 
         <!-- Content Wrapper -->
         <div class="content-wrapper">
-            {{-- Alert Messages --}}
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i> {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
             @yield('section')
         </div>
     </div>
@@ -342,20 +336,8 @@
                 sidebar.classList.remove('show');
             }
         });
-
-        // Auto hide alerts after 5 seconds
-        // document.addEventListener('DOMContentLoaded', function () {
-        //     setTimeout(function () {
-        //         const alerts = document.querySelectorAll('.alert');
-        //         alerts.forEach(function (alert) {
-        //             const bsAlert = new bootstrap.Alert(alert);
-        //             bsAlert.close();
-        //         });
-        //     }, 5000);
-        // });
     </script>
 
     @stack('scripts')
 </body>
-
 </html>

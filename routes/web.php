@@ -5,7 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalGuruController;
 use App\Http\Controllers\NilaiController;
-use App\Http\Controllers\OrangtuaController;
+use App\Http\Controllers\OrangTuaController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapanController;
@@ -228,8 +228,13 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
 
 // Routes untuk Orangtua
 Route::middleware(['auth', 'role:orangtua'])->prefix('orangtua')->name('orangtua.')->group(function () {
-    Route::get('/dashboard', [OrangtuaController::class, 'dashboard'])->name('dashboard');
-    // Tambahkan route lain untuk orangtua di sini nanti
+    Route::get('/dashboard', [OrangTuaController::class, 'dashboard'])->name('dashboard');
+    Route::get('/anak/{id}', [OrangTuaController::class, 'detailAnak'])->name('detail-anak');
+    Route::get('/anak/{id}/riwayat', [OrangTuaController::class, 'riwayatAnak'])->name('riwayat-anak');
+    Route::get('/rekapan/{id}', [OrangTuaController::class, 'detailRekapan'])->name('detail-rekapan');
+    Route::get('/profil', [OrangTuaController::class, 'profil'])->name('profil');
+    Route::post('/profil', [OrangTuaController::class, 'updateProfil'])->name('profil.update');
+    Route::post('/profil/password', [OrangTuaController::class, 'updatePassword'])->name('profil.password');
 });
 
 require __DIR__ . '/auth.php';

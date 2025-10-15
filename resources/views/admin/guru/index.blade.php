@@ -34,12 +34,12 @@
                     <table class="table table-hover table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th width="5%">No</th>
+                                <th width="5%" class="text-center">No</th>
                                 <th width="12%">NIP</th>
                                 <th width="18%">Nama Guru</th>
-                                <th width="10%">Status Akun</th>
+                                <th width="10%" class="text-center">Status Akun</th>
                                 <th width="15%">Role</th>
-                                <th width="12%">Kelas Wali</th>
+                                <th width="12%" class="text-center">Kelas Wali</th>
                                 <th width="18%">Mapel Diampu</th>
                                 <th width="10%" class="text-center">Aksi</th>
                             </tr>
@@ -47,10 +47,10 @@
                         <tbody>
                             @forelse($gurus as $index => $guru)
                                 <tr>
-                                    <td>{{ $gurus->firstItem() + $index }}</td>
+                                    <td class="text-center">{{ $gurus->firstItem() + $index }}</td>
                                     <td><strong>{{ $guru->nip }}</strong></td>
                                     <td>{{ $guru->nama_guru }}</td>
-                                    <td>
+                                    <td class="text-center">
                                         @if($guru->user)
                                             <span class="badge bg-success" title="Username: {{ $guru->user->username }}">
                                                 <i class="fas fa-check-circle me-1"></i>Ada Akun
@@ -73,7 +73,7 @@
                                             <span class="badge bg-secondary">Guru</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if($guru->kelasWali)
                                             <span class="badge bg-primary">{{ $guru->kelasWali->nama }}</span>
                                         @else
@@ -93,16 +93,16 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.guru.show', $guru->id) }}" class="btn btn-info btn-sm"
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ route('admin.guru.show', $guru->id) }}" class="btn btn-info"
                                                 title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.guru.edit', $guru->id) }}" class="btn btn-warning btn-sm"
+                                            <a href="{{ route('admin.guru.edit', $guru->id) }}" class="btn btn-warning"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Hapus"
+                                            <button type="button" class="btn btn-danger" title="Hapus"
                                                 onclick="confirmDelete({{ $guru->id }}, '{{ $guru->nama_guru }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -132,14 +132,84 @@
                     </table>
                 </div>
 
+                <!-- Pagination Section - Style DataTables -->
                 @if($gurus->hasPages())
-                    <div class="mt-4 d-flex justify-content-center">
-                        {{ $gurus->links() }}
+                    <div class="row mt-3">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" role="status" aria-live="polite">
+                                Showing {{ $gurus->firstItem() }} to {{ $gurus->lastItem() }} of {{ $gurus->total() }} entries
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers float-end">
+                                {{ $gurus->links('pagination::bootstrap-4') }}
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
         </div>
     </div>
+
+    @push('styles')
+        <style>
+            /* DataTables Style Pagination */
+            .dataTables_info {
+                padding-top: 8px;
+                color: #6c757d;
+                font-size: 14px;
+            }
+
+            .dataTables_paginate {
+                padding-top: 0;
+            }
+
+            .pagination {
+                margin-bottom: 0;
+            }
+
+            .page-link {
+                color: #495057;
+                background-color: #fff;
+                border: 1px solid #dee2e6;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.5;
+                border-radius: 3px;
+                margin: 0 2px;
+            }
+
+            .page-link:hover {
+                color: #0056b3;
+                background-color: #e9ecef;
+                border-color: #dee2e6;
+            }
+
+            .page-item.active .page-link {
+                z-index: 3;
+                color: #fff;
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+
+            .page-item.disabled .page-link {
+                color: #6c757d;
+                pointer-events: none;
+                background-color: #fff;
+                border-color: #dee2e6;
+            }
+
+            .page-item:first-child .page-link {
+                border-top-left-radius: 3px;
+                border-bottom-left-radius: 3px;
+            }
+
+            .page-item:last-child .page-link {
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script>

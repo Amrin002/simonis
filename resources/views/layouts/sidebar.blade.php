@@ -71,14 +71,14 @@
                 class="menu-link {{ request()->routeIs('guru.rekapan.*') ? 'active' : '' }}">
                     <i class="fas fa-book"></i> Rekapan
                 </a></li>
-            <li>
+            {{-- <li>
                 <a href="#" class="menu-link {{ request()->routeIs('guru.rapor.*') ? 'active' : '' }}">
                     <i class="fas fa-file-alt"></i> Rapor Siswa
                 </a>
-            </li>
+            </li> --}}
         @endif
 
-        {{-- Menu umum --}}
+        {{-- Menu umum
         <li class="menu-header">
             <span>UMUM</span>
         </li>
@@ -86,7 +86,7 @@
             <a href="#" class="menu-link {{ request()->routeIs('guru.profil') ? 'active' : '' }}">
                 <i class="fas fa-user"></i> Profil Saya
             </a>
-        </li>
+        </li> --}}
 
     </ul>
 </div>

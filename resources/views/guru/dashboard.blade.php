@@ -260,7 +260,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-lg-3 col-md-6 mb-3">
-                                    <a href="#" class="text-decoration-none">
+                                    <a href="{{ route('guru.absensi.index') }}" class="text-decoration-none">
                                         <div class="card border-primary h-100 hover-shadow">
                                             <div class="card-body text-center">
                                                 <i class="fas fa-clipboard-check fa-3x text-primary mb-3"></i>
@@ -272,7 +272,7 @@
                                 </div>
 
                                 <div class="col-lg-3 col-md-6 mb-3">
-                                    <a href="#" class="text-decoration-none">
+                                    <a href="{{ route('guru.pelanggaran.index') }}" class="text-decoration-none">
                                         <div class="card border-warning h-100 hover-shadow">
                                             <div class="card-body text-center">
                                                 <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
@@ -284,11 +284,11 @@
                                 </div>
 
                                 <div class="col-lg-3 col-md-6 mb-3">
-                                    <a href="#" class="text-decoration-none">
+                                    <a href="{{ route('guru.nilai.index') }}" class="text-decoration-none">
                                         <div class="card border-success h-100 hover-shadow">
                                             <div class="card-body text-center">
                                                 <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
-                                                <h6 class="card-title">Lihat Rapor</h6>
+                                                <h6 class="card-title">Input Nilai</h6>
                                                 <p class="card-text text-muted small">Akses rapor siswa</p>
                                             </div>
                                         </div>
@@ -296,7 +296,7 @@
                                 </div>
 
                                 <div class="col-lg-3 col-md-6 mb-3">
-                                    <a href="{{ route('guru.kelas-wali') }}" class="text-decoration-none">
+                                    <a href="{{ route('guru.siswa.index') }}" class="text-decoration-none">
                                         <div class="card border-info h-100 hover-shadow">
                                             <div class="card-body text-center">
                                                 <i class="fas fa-users fa-3x text-info mb-3"></i>
@@ -355,7 +355,7 @@
                                     @endforeach
                                 </div>
                                 <div class="text-center mt-3">
-                                    <a href="{{ route('guru.kelas-wali') }}" class="btn btn-success w-100">
+                                    <a href="{{ route('guru.siswa.index', $kelasWali->id) }}" class="btn btn-success w-100">
                                         <i class="fas fa-eye me-1"></i> Lihat Semua Siswa
                                     </a>
                                 </div>

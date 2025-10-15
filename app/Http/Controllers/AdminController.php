@@ -415,7 +415,7 @@ class AdminController extends Controller
 
         DB::beginTransaction();
         try {
-            // Validasi jika wali guru dipilih, pastikan is_wali_kelas = true
+            // Validasi jika wali guru dipilih
             if ($request->wali_guru_id) {
                 $guru = Guru::find($request->wali_guru_id);
                 if (!$guru->is_wali_kelas) {
@@ -425,7 +425,6 @@ class AdminController extends Controller
                         ->with('error', 'Guru yang dipilih bukan wali kelas');
                 }
 
-                // Cek apakah guru sudah menjadi wali kelas di kelas lain
                 if ($guru->kelasWali) {
                     return redirect()
                         ->back()
@@ -434,10 +433,15 @@ class AdminController extends Controller
                 }
             }
 
-            Kelas::create([
+            // ✅ FIX: Create kelas
+            $kelas = Kelas::create([
                 'nama' => $validated['nama'],
                 'wali_guru_id' => $request->wali_guru_id,
             ]);
+
+            // ✅ TAMBAHKAN INI: Trigger observer manually jika perlu
+            // Atau biarkan observer handle via event
+            $kelas->refresh(); // Refresh untuk memastikan relasi ter-load
 
             DB::commit();
 
@@ -503,7 +507,6 @@ class AdminController extends Controller
                         ->with('error', 'Guru yang dipilih bukan wali kelas');
                 }
 
-                // Cek apakah guru sudah menjadi wali kelas di kelas lain
                 if ($guru->kelasWali && $guru->kelasWali->id != $kelas->id) {
                     return redirect()
                         ->back()
@@ -512,10 +515,13 @@ class AdminController extends Controller
                 }
             }
 
+            // ✅ FIX: Update pakai eloquent (biar observer jalan)
             $kelas->update([
                 'nama' => $validated['nama'],
                 'wali_guru_id' => $request->wali_guru_id,
             ]);
+
+            // Observer akan otomatis handle sync kelas_wali_id
 
             DB::commit();
 
