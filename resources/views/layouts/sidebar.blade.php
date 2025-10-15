@@ -11,12 +11,7 @@
                 <i class="fas fa-home"></i> Dashboard
             </a>
         </li>
-        <li>
-            <a href="{{ route('guru.absensi.index') }}"
-                class="menu-link {{ request()->routeIs('guru.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-clipboard-check"></i> Absensi
-            </a>
-        </li>
+
 
         {{-- Menu untuk Guru Mapel --}}
         @if(Auth::user()->guru->isGuruMapel())
@@ -25,7 +20,7 @@
             </li>
             <li>
                 <a href="{{ route('guru.jadwal.index') }}"
-                    class="menu-link {{ request()->routeIs('guru.jadwal-mengajar') ? 'active' : '' }}">
+                    class="menu-link {{ request()->routeIs('guru.jadwal.*') ? 'active' : '' }}">
                     <i class="fas fa-calendar-alt"></i> Jadwal Mengajar
                 </a>
             </li>
@@ -36,8 +31,15 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="menu-link {{ request()->routeIs('guru.nilai.*') ? 'active' : '' }}">
-                    <i class="fas fa-clipboard-list"></i> Input Nilai
+                <a href="{{ route('guru.absensi.index') }}"
+                    class="menu-link {{ request()->routeIs('guru.absensi.*') ? 'active' : '' }}">
+                    <i class="fas fa-clipboard-check"></i> Absensi
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('guru.nilai.index') }}"
+                    class="menu-link {{ request()->routeIs('guru.nilai.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line"></i> Input Nilai
                 </a>
             </li>
         @endif
@@ -48,19 +50,21 @@
                 <span>WALI KELAS</span>
             </li>
             <li>
-                <a href="{{ route('guru.kelas-wali') }}"
-                    class="menu-link {{ request()->routeIs('guru.kelas-wali') ? 'active' : '' }}">
-                    <i class="fas fa-door-open"></i> Kelas {{ Auth::user()->guru->namaKelasWali }}
-                </a>
-            </li>
-            <li>
-                <a href="#" class="menu-link {{ request()->routeIs('guru.absensi.*') ? 'active' : '' }}">
+                <a href="{{ route('guru.absensi.index') }}"
+                    class="menu-link {{ request()->routeIs('guru.absensi.*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-check"></i> Absensi Kelas
                 </a>
             </li>
             <li>
-                <a href="{{ route('guru.pelanggaran.index') }}" class="menu-link {{ request()->routeIs('guru.pelanggaran.*') ? 'active' : '' }}">
+                <a href="{{ route('guru.pelanggaran.index') }}"
+                    class="menu-link {{ request()->routeIs('guru.pelanggaran.*') ? 'active' : '' }}">
                     <i class="fas fa-exclamation-triangle"></i> Pelanggaran Siswa
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('guru.nilai.akhir') }}"
+                    class="menu-link {{ request()->routeIs('guru.nilai.*') ? 'active' : '' }}">
+                    <i class="fas fa-trophy"></i> Nilai Siswa
                 </a>
             </li>
             <li>

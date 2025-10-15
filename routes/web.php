@@ -4,6 +4,7 @@ use App\Http\Controllers\AbsensiGuruController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\JadwalGuruController;
+use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\OrangtuaController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\ProfileController;
@@ -171,6 +172,34 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         Route::get('/{id}/edit', [PelanggaranController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PelanggaranController::class, 'update'])->name('update');
         Route::delete('/{id}', [PelanggaranController::class, 'destroy'])->name('destroy');
+    });
+    // Nilai Routes (dalam grup guru middleware)
+    Route::prefix('nilai')->name('nilai.')->group(function () {
+        Route::get('/', [NilaiController::class, 'index'])->name('index');
+
+        // Pilih kelas & mapel
+        Route::get('/select-kelas-mapel', [NilaiController::class, 'selectKelasMapel'])->name('select-kelas-mapel');
+
+        // Nilai Tugas
+        Route::get('/tugas/create', [NilaiController::class, 'createTugas'])->name('tugas.create');
+        Route::post('/tugas', [NilaiController::class, 'storeTugas'])->name('tugas.store');
+
+        // Nilai UTS
+        Route::get('/uts/create', [NilaiController::class, 'createUTS'])->name('uts.create');
+        Route::post('/uts', [NilaiController::class, 'storeUTS'])->name('uts.store');
+
+        // Nilai UAS
+        Route::get('/uas/create', [NilaiController::class, 'createUAS'])->name('uas.create');
+        Route::post('/uas', [NilaiController::class, 'storeUAS'])->name('uas.store');
+
+        // Nilai Akhir
+        Route::get('/akhir', [NilaiController::class, 'showNilaiAkhir'])->name('akhir');
+        Route::get('/print', [NilaiController::class, 'print'])->name('print');
+        // Detail & Manage
+        Route::get('/{siswaId}/mapel/{mapelId}', [NilaiController::class, 'show'])->name('show');
+        Route::get('/{id}/edit/{jenis}', [NilaiController::class, 'edit'])->name('edit');
+        Route::put('/{id}/{jenis}', [NilaiController::class, 'update'])->name('update');
+        Route::delete('/{id}/{jenis}', [NilaiController::class, 'destroy'])->name('destroy');
     });
 });
 
