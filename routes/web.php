@@ -8,6 +8,7 @@ use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\OrangtuaController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RekapanController;
 use App\Http\Controllers\SiswaGuruController;
 use App\Http\Controllers\SiswaWaliKelasController;
 use App\Http\Controllers\UserController;
@@ -123,6 +124,10 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         Route::put('/{id}', [AbsensiGuruController::class, 'update'])->name('update');
         Route::delete('/{id}', [AbsensiGuruController::class, 'destroy'])->name('destroy');
 
+        Route::post('/{id}/kirim-wali-kelas', [AbsensiGuruController::class, 'kirimKeWaliKelas'])->name('kirim-wali-kelas');
+        Route::post('/{id}/selesaikan', [AbsensiGuruController::class, 'selesaikanAbsen'])->name('selesaikan');
+        Route::post('/{id}/selesaikan-langsung', [AbsensiGuruController::class, 'selesaikanLangsung'])->name('selesaikan-langsung');
+
         // Routes khusus Wali Kelas
         Route::middleware('role:guru,walikelas')->group(function () {
             Route::get('/wali-kelas/create', [AbsensiGuruController::class, 'createWaliKelas'])->name('create-wali-kelas');
@@ -172,6 +177,7 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         Route::get('/{id}/edit', [PelanggaranController::class, 'edit'])->name('edit');
         Route::put('/{id}', [PelanggaranController::class, 'update'])->name('update');
         Route::delete('/{id}', [PelanggaranController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/selesaikan', [PelanggaranController::class, 'selesaikan'])->name('selesaikan');
     });
     // Nilai Routes (dalam grup guru middleware)
     Route::prefix('nilai')->name('nilai.')->group(function () {
@@ -200,6 +206,23 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         Route::get('/{id}/edit/{jenis}', [NilaiController::class, 'edit'])->name('edit');
         Route::put('/{id}/{jenis}', [NilaiController::class, 'update'])->name('update');
         Route::delete('/{id}/{jenis}', [NilaiController::class, 'destroy'])->name('destroy');
+    });
+    Route::prefix('rekapan')->name('rekapan.')->group(function () {
+        // Dashboard Rekapan
+        Route::get('/dashboard', [RekapanController::class, 'dashboard'])->name('dashboard');
+
+        // Kirim Rekapan via WhatsApp
+        Route::get('/kirim', [RekapanController::class, 'halamanKirim'])->name('kirim');
+
+        // Regenerate Rekapan Hari Ini
+        Route::post('/regenerate', [RekapanController::class, 'regenerateHariIni'])->name('regenerate');
+
+        // Detail & Riwayat Rekapan
+        Route::get('/{id}', [RekapanController::class, 'show'])->name('show');
+        Route::get('/riwayat/{siswaId}', [RekapanController::class, 'riwayatSiswa'])->name('riwayat');
+
+        // AJAX - Mark sebagai dikirim
+        Route::post('/{id}/mark-dikirim', [RekapanController::class, 'markDikirim'])->name('mark-dikirim');
     });
 });
 

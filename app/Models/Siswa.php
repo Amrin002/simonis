@@ -169,6 +169,14 @@ class Siswa extends Model
     }
 
     /**
+     * Get rekapan siswa (one-to-one)
+     */
+    public function rekapan()
+    {
+        return $this->hasOne(Rekapan::class, 'siswa_id');
+    }
+
+    /**
      * Get pelanggaran bulan ini
      */
     public function getPelanggaranBulanIni()

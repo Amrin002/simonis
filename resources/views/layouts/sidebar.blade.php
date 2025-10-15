@@ -67,6 +67,10 @@
                     <i class="fas fa-trophy"></i> Nilai Siswa
                 </a>
             </li>
+            <li><a href="{{ route('guru.rekapan.dashboard') }}"
+                class="menu-link {{ request()->routeIs('guru.rekapan.*') ? 'active' : '' }}">
+                    <i class="fas fa-book"></i> Rekapan
+                </a></li>
             <li>
                 <a href="#" class="menu-link {{ request()->routeIs('guru.rapor.*') ? 'active' : '' }}">
                     <i class="fas fa-file-alt"></i> Rapor Siswa

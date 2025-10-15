@@ -57,6 +57,11 @@ class AbsensiGuruController extends Controller
             $query->where('mata_pelajaran', $mapel);
         }
 
+        $statusFilter = $request->get('status');
+        if ($statusFilter) {
+            $query->where('status_rekapan', $statusFilter);
+        }
+
         $absensis = $query->orderBy('tanggal', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
@@ -73,7 +78,8 @@ class AbsensiGuruController extends Controller
             'mapelList',
             'tanggal',
             'kelas',
-            'mapel'
+            'mapel',
+            'statusFilter',
         ));
     }
 
@@ -444,5 +450,128 @@ class AbsensiGuruController extends Controller
         }
 
         return collect();
+    }
+    /**
+     * Kirim absen ke wali kelas (untuk guru mapel)
+     */
+    public function kirimKeWaliKelas($id)
+    {
+        try {
+            $absen = Absen::findOrFail($id);
+            $guru = Auth::user()->guru;
+
+            // Validasi: Hanya bisa kirim jika status draft
+            if (!$absen->canKirim()) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Absen tidak dapat dikirim. Status saat ini: ' . $absen->status_text);
+            }
+
+            // Validasi: Tidak bisa kirim jika ini absen wali kelas sendiri
+            if ($absen->isAbsenWaliKelas($guru)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Anda adalah wali kelas, gunakan tombol "Selesai"');
+            }
+
+            // Kirim ke wali kelas
+            $absen->kirimKeWaliKelas();
+
+            return redirect()
+                ->back()
+                ->with('success', 'Absen berhasil dikirim ke wali kelas');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengirim absen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Selesaikan absen (untuk wali kelas yang terima kiriman dari guru mapel)
+     */
+    public function selesaikanAbsen($id)
+    {
+        try {
+            $absen = Absen::findOrFail($id);
+            $guru = Auth::user()->guru;
+
+            // Validasi: Hanya wali kelas yang bisa selesaikan
+            if (!$absen->isAbsenWaliKelas($guru)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Hanya wali kelas yang dapat menyelesaikan absen');
+            }
+
+            // Selesaikan absen
+            $absen->selesaikan($guru);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Absen berhasil diselesaikan. Rekapan telah dibuat untuk semua siswa.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menyelesaikan absen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Selesaikan langsung (untuk wali kelas yang absen di kelasnya sendiri)
+     */
+    public function selesaikanLangsung($id)
+    {
+        try {
+            $absen = Absen::findOrFail($id);
+            $guru = Auth::user()->guru;
+
+            // Validasi: Hanya wali kelas yang bisa selesaikan
+            if (!$absen->isAbsenWaliKelas($guru)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Hanya wali kelas yang dapat menyelesaikan absen');
+            }
+
+            // Validasi: Hanya bisa selesaikan jika status draft
+            if ($absen->status_rekapan !== 'draft') {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Absen tidak dapat diselesaikan. Status saat ini: ' . $absen->status_text);
+            }
+
+            // Selesaikan langsung
+            $absen->selesaikanLangsung($guru);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Absen berhasil diselesaikan. Rekapan telah dibuat untuk semua siswa.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menyelesaikan absen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Halaman notifikasi absen masuk untuk wali kelas
+     */
+    public function notifikasiAbsenMasuk()
+    {
+        $guru = Auth::user()->guru;
+
+        // Validasi: Hanya wali kelas
+        if (!$guru->is_wali_kelas || !$guru->kelasWali) {
+            abort(403, 'Hanya wali kelas yang dapat mengakses halaman ini');
+        }
+
+        // Ambil absen yang menunggu persetujuan
+        $absenMenunggu = Absen::menungguWaliKelas($guru->kelasWali->id)
+            ->with(['kelas', 'mapel'])
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        $title = 'Notifikasi Absen Masuk';
+
+        return view('wali-kelas.notifikasi-absen', compact('absenMenunggu', 'title'));
     }
 }

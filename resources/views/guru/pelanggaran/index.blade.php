@@ -27,6 +27,38 @@
             </div>
         </div>
 
+        {{-- ✅ ALERT PELANGGARAN DRAFT --}}
+        @php
+            $pelanggaranDraft = \App\Models\Pelanggaran::where('kelas_id', $kelas->id)
+                ->where('status_rekapan', 'draft')
+                ->count();
+        @endphp
+
+        @if($pelanggaranDraft > 0)
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">
+                                    <strong>{{ $pelanggaranDraft }}</strong> Pelanggaran Belum Diselesaikan
+                                </h5>
+                                <p class="mb-0">
+                                    Klik "Selesaikan" pada pelanggaran draft agar masuk ke rekapan harian.
+                                </p>
+                            </div>
+                            <a href="{{ route('guru.pelanggaran.index', ['status' => 'draft']) }}"
+                               class="btn btn-light">
+                                <i class="fas fa-eye me-1"></i> Lihat Draft
+                            </a>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Statistics Cards --}}
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6 mb-3">
@@ -101,7 +133,7 @@
                                         value="{{ $search ?? '' }}">
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">
                                         <i class="fas fa-tag me-1"></i>Kategori
                                     </label>
@@ -115,6 +147,22 @@
                                         </option>
                                         <option value="Berat" {{ ($kategori ?? '') == 'Berat' ? 'selected' : '' }}>
                                             Berat
+                                        </option>
+                                    </select>
+                                </div>
+
+                                {{-- ✅ TAMBAH: Filter Status --}}
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle me-1"></i>Status
+                                    </label>
+                                    <select name="status" class="form-select">
+                                        <option value="">Semua Status</option>
+                                        <option value="draft" {{ ($statusFilter ?? '') == 'draft' ? 'selected' : '' }}>
+                                            Draft
+                                        </option>
+                                        <option value="selesai" {{ ($statusFilter ?? '') == 'selesai' ? 'selected' : '' }}>
+                                            Selesai
                                         </option>
                                     </select>
                                 </div>
@@ -133,13 +181,13 @@
                                     <input type="month" name="bulan" class="form-control" value="{{ $bulan ?? '' }}">
                                 </div>
 
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                                     <label class="form-label">&nbsp;</label>
                                     <div class="d-flex gap-2">
                                         <button type="submit" class="btn btn-primary w-100">
                                             <i class="fas fa-filter me-1"></i> Filter
                                         </button>
-                                        @if($search || $kategori || $tanggal || $bulan)
+                                        @if($search || $kategori || $tanggal || $bulan || ($statusFilter ?? ''))
                                             <a href="{{ route('guru.pelanggaran.index') }}" class="btn btn-secondary">
                                                 <i class="fas fa-redo"></i>
                                             </a>
@@ -174,12 +222,12 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th width="5%">No</th>
-                                            <th width="12%">Tanggal</th>
-                                            <th width="20%">Siswa</th>
-                                            <th width="23%">Jenis Pelanggaran</th>
-                                            <th width="12%" class="text-center">Kategori</th>
-                                            <th width="18%">Keterangan</th>
-                                            <th width="10%" class="text-center">Aksi</th>
+                                            <th width="10%">Tanggal</th>
+                                            <th width="18%">Siswa</th>
+                                            <th width="20%">Jenis Pelanggaran</th>
+                                            <th width="10%" class="text-center">Kategori</th>
+                                            <th width="15%">Keterangan</th>
+                                            <th width="22%" class="text-center">Status & Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -227,28 +275,62 @@
                                                         <small class="text-muted">-</small>
                                                     @endif
                                                 </td>
+
+                                                {{-- ✅ KOLOM STATUS & AKSI DENGAN WORKFLOW --}}
                                                 <td class="text-center">
-                                                    <div class="btn-group" role="group">
-                                                        <a href="{{ route('guru.pelanggaran.show', $pelanggaran->id) }}"
-                                                            class="btn btn-sm btn-info" title="Detail">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <a href="{{ route('guru.pelanggaran.edit', $pelanggaran->id) }}"
-                                                            class="btn btn-sm btn-warning" title="Edit">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <button type="button" class="btn btn-sm btn-danger"
-                                                            onclick="confirmDelete({{ $pelanggaran->id }})" title="Hapus">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
+                                                    {{-- Status Badge --}}
+                                                    <div class="mb-2">
+                                                        <span class="badge bg-{{ $pelanggaran->status_rekapan_badge_color }}">
+                                                            {{ $pelanggaran->status_rekapan_text }}
+                                                        </span>
                                                     </div>
 
-                                                    <form id="delete-form-{{ $pelanggaran->id }}"
-                                                        action="{{ route('guru.pelanggaran.destroy', $pelanggaran->id) }}"
-                                                        method="POST" class="d-none">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                    </form>
+                                                    {{-- Button Selesaikan jika masih draft --}}
+                                                    @if($pelanggaran->canSelesai())
+                                                        <form action="{{ route('guru.pelanggaran.selesaikan', $pelanggaran->id) }}"
+                                                              method="POST"
+                                                              class="d-inline"
+                                                              onsubmit="return confirm('Selesaikan pelanggaran ini? Data akan masuk ke rekapan dan tidak bisa diubah lagi.')">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-success mb-1 w-100">
+                                                                <i class="fas fa-check-circle me-1"></i> Selesaikan
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                    {{-- Button Edit/Delete/Detail --}}
+                                                    @if($pelanggaran->canEdit())
+                                                        <div class="btn-group w-100" role="group">
+                                                            <a href="{{ route('guru.pelanggaran.show', $pelanggaran->id) }}"
+                                                                class="btn btn-sm btn-info" title="Detail">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            <a href="{{ route('guru.pelanggaran.edit', $pelanggaran->id) }}"
+                                                                class="btn btn-sm btn-warning" title="Edit">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-danger"
+                                                                onclick="confirmDelete({{ $pelanggaran->id }})" title="Hapus">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <form id="delete-form-{{ $pelanggaran->id }}"
+                                                            action="{{ route('guru.pelanggaran.destroy', $pelanggaran->id) }}"
+                                                            method="POST" class="d-none">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                        </form>
+                                                    @else
+                                                        {{-- Jika sudah selesai, hanya tampilkan button detail --}}
+                                                        <a href="{{ route('guru.pelanggaran.show', $pelanggaran->id) }}"
+                                                           class="btn btn-sm btn-info w-100" title="Detail">
+                                                            <i class="fas fa-eye me-1"></i> Lihat Detail
+                                                        </a>
+                                                        <small class="text-muted d-block mt-2">
+                                                            <i class="fas fa-lock me-1"></i> Tidak bisa diubah
+                                                        </small>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -281,13 +363,13 @@
                                 <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
                                 <h5 class="text-muted">Tidak ada pelanggaran ditemukan</h5>
                                 <p class="text-muted">
-                                    @if($search || $kategori || $tanggal || $bulan)
+                                    @if($search || $kategori || $tanggal || $bulan || ($statusFilter ?? ''))
                                         Tidak ada pelanggaran yang sesuai dengan filter
                                     @else
                                         Belum ada catatan pelanggaran untuk kelas ini
                                     @endif
                                 </p>
-                                @if($search || $kategori || $tanggal || $bulan)
+                                @if($search || $kategori || $tanggal || $bulan || ($statusFilter ?? ''))
                                     <a href="{{ route('guru.pelanggaran.index') }}" class="btn btn-primary mt-3">
                                         <i class="fas fa-redo me-1"></i> Reset Filter
                                     </a>
@@ -402,6 +484,12 @@
             border-top-right-radius: 0.25rem;
             border-bottom-right-radius: 0.25rem;
         }
+
+        /* ✅ Style untuk alert */
+        .alert {
+            border: none;
+            border-radius: 12px;
+        }
     </style>
 @endpush
 
@@ -443,6 +531,14 @@
                 text: '{{ session('error') }}',
                 timer: 3000,
                 showConfirmButton: false
+            });
+        @endif
+
+        @if(session('warning'))
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian!',
+                text: '{{ session('warning') }}',
             });
         @endif
     </script>

@@ -55,6 +55,10 @@ class PelanggaranController extends Controller
             $query->whereYear('tanggal', date('Y', strtotime($bulan)))
                 ->whereMonth('tanggal', date('m', strtotime($bulan)));
         }
+        $statusFilter = $request->get('status');
+        if ($statusFilter) {
+            $query->where('status_rekapan', $statusFilter);
+        }
 
         $pelanggarans = $query->orderBy('tanggal', 'desc')
             ->orderBy('created_at', 'desc')
@@ -78,7 +82,8 @@ class PelanggaranController extends Controller
             'search',
             'kategori',
             'tanggal',
-            'bulan'
+            'bulan',
+            'statusFilter',
         ));
     }
 
@@ -163,6 +168,14 @@ class PelanggaranController extends Controller
             return back()->with('error', 'Siswa tidak terdaftar di kelas Anda!');
         }
 
+        // ✅ TAMBAH VALIDASI INI - Cek apakah sudah ada pelanggaran selesai hari ini
+        $checkValidation = $this->validateBeforeCreate($request->siswa_id, $request->tanggal);
+        if (!$checkValidation['valid']) {
+            return back()
+                ->withInput()
+                ->with('warning', $checkValidation['message']);
+        }
+
         DB::beginTransaction();
         try {
             Pelanggaran::create([
@@ -173,18 +186,18 @@ class PelanggaranController extends Controller
                 'wali_kelas_id' => $guru->id,
                 'kelas_id' => $kelas->id,
                 'keterangan' => $request->keterangan,
+                'status_rekapan' => 'draft', // ✅ TAMBAH INI - Default draft
             ]);
 
             DB::commit();
 
             return redirect()->route('guru.pelanggaran.index')
-                ->with('success', 'Pelanggaran berhasil ditambahkan!');
+                ->with('success', 'Pelanggaran berhasil ditambahkan! Jangan lupa klik "Selesai" untuk memasukkan ke rekapan.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal menambahkan pelanggaran: ' . $e->getMessage());
         }
     }
-
     /**
      * Show detail pelanggaran
      */
@@ -348,5 +361,63 @@ class PelanggaranController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus pelanggaran: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Selesaikan pelanggaran (hanya wali kelas)
+     */
+    public function selesaikan($id)
+    {
+        try {
+            $pelanggaran = Pelanggaran::findOrFail($id);
+            $guru = Auth::user()->guru;
+
+            // Validasi: Hanya wali kelas yang bisa selesaikan
+            if (!$guru->is_wali_kelas) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Hanya wali kelas yang dapat menyelesaikan pelanggaran');
+            }
+
+            // Validasi: Hanya bisa selesaikan jika status draft
+            if (!$pelanggaran->canSelesai()) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Pelanggaran tidak dapat diselesaikan. Status: ' . $pelanggaran->status_rekapan_text);
+            }
+
+            // Validasi: Max 1 pelanggaran per siswa per hari
+            if (!Pelanggaran::canAddForToday($pelanggaran->siswa_id, $pelanggaran->tanggal)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Siswa ini sudah memiliki pelanggaran yang diselesaikan untuk hari ini');
+            }
+
+            // Selesaikan pelanggaran
+            $pelanggaran->selesaikan();
+
+            return redirect()
+                ->back()
+                ->with('success', 'Pelanggaran berhasil diselesaikan. Rekapan telah diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menyelesaikan pelanggaran: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validasi sebelum create (cek max 1 per hari)
+     */
+    public function validateBeforeCreate($siswaId, $tanggal)
+    {
+        if (!Pelanggaran::canAddForToday($siswaId, $tanggal)) {
+            return [
+                'valid' => false,
+                'message' => 'Siswa ini sudah memiliki pelanggaran yang diselesaikan untuk hari ini'
+            ];
+        }
+
+        return ['valid' => true];
     }
 }

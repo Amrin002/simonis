@@ -15,7 +15,6 @@
                             </p>
                         </div>
                         <div>
-                            {{-- ✅ PERBAIKAN: Tampilan button yang lebih baik --}}
                             @if($guru->isWaliKelas() && $guru->isGuruMapel())
                                 {{-- Jika guru adalah WALI KELAS DAN GURU MAPEL --}}
                                 <div class="btn-group" role="group">
@@ -54,6 +53,38 @@
                 </div>
             </div>
 
+            {{-- ✅ NOTIFIKASI ABSEN MASUK (WALI KELAS) --}}
+            @if($guru->isWaliKelas())
+                @php
+                    $absenMenunggu = \App\Models\Absen::menungguWaliKelas($guru->kelasWali->id)->count();
+                @endphp
+
+                @if($absenMenunggu > 0)
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-bell fa-2x me-3"></i>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            <strong>{{ $absenMenunggu }}</strong> Absen Menunggu Persetujuan
+                                        </h5>
+                                        <p class="mb-0">
+                                            Ada absen dari guru mapel yang perlu diselesaikan untuk masuk ke rekapan harian.
+                                        </p>
+                                    </div>
+                                    <a href="{{ route('guru.absensi.index', ['status' => 'dikirim']) }}"
+                                       class="btn btn-light">
+                                        <i class="fas fa-eye me-1"></i> Lihat Absen
+                                    </a>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endif
+
             {{-- Statistics Cards --}}
             <div class="row mb-4">
                 <div class="col-xl-3 col-md-6 mb-3">
@@ -78,7 +109,7 @@
                             </div>
                             <div>
                                 @php
-    $absenHariIni = $absensis->filter(fn($a) => $a->tanggal->isToday())->count();
+                                    $absenHariIni = $absensis->filter(fn($a) => $a->tanggal->isToday())->count();
                                 @endphp
                                 <h3 class="mb-0">{{ $absenHariIni }}</h3>
                                 <p class="text-muted mb-0">Absen Hari Ini</p>
@@ -109,7 +140,7 @@
                             </div>
                             <div>
                                 @php
-    $avgKehadiran = $absensis->avg('presentase_kehadiran') ?? 0;
+                                    $avgKehadiran = $absensis->avg('presentase_kehadiran') ?? 0;
                                 @endphp
                                 <h3 class="mb-0">{{ number_format($avgKehadiran, 1) }}%</h3>
                                 <p class="text-muted mb-0">Rata-rata Kehadiran</p>
@@ -126,7 +157,7 @@
                         <div class="card-body">
                             <form action="{{ route('guru.absensi.index') }}" method="GET">
                                 <div class="row g-3">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <label class="form-label">
                                             <i class="fas fa-calendar me-1"></i>Tanggal
                                         </label>
@@ -134,7 +165,7 @@
                                                value="{{ $tanggal }}">
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <label class="form-label">
                                             <i class="fas fa-door-open me-1"></i>Kelas
                                         </label>
@@ -149,7 +180,7 @@
                                     </div>
 
                                     @if($guru->isGuruMapel())
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <label class="form-label">
                                                 <i class="fas fa-book me-1"></i>Mata Pelajaran
                                             </label>
@@ -165,7 +196,28 @@
                                         </div>
                                     @endif
 
-                                    <div class="col-md-3">
+                                    {{-- ✅ TAMBAH: Filter Status (Wali Kelas) --}}
+                                    @if($guru->isWaliKelas())
+                                        <div class="col-md-2">
+                                            <label class="form-label">
+                                                <i class="fas fa-info-circle me-1"></i>Status
+                                            </label>
+                                            <select name="status" class="form-select">
+                                                <option value="">Semua Status</option>
+                                                <option value="draft" {{ ($statusFilter ?? '') == 'draft' ? 'selected' : '' }}>
+                                                    Draft
+                                                </option>
+                                                <option value="dikirim" {{ ($statusFilter ?? '') == 'dikirim' ? 'selected' : '' }}>
+                                                    Menunggu Persetujuan
+                                                </option>
+                                                <option value="selesai" {{ ($statusFilter ?? '') == 'selesai' ? 'selected' : '' }}>
+                                                    Selesai
+                                                </option>
+                                            </select>
+                                        </div>
+                                    @endif
+
+                                    <div class="col-md-2">
                                         <label class="form-label">&nbsp;</label>
                                         <div class="d-flex gap-2">
                                             <button type="submit" class="btn btn-primary w-100">
@@ -199,16 +251,16 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th width="5%">No</th>
-                                                <th width="12%">Tanggal</th>
-                                                <th width="15%">Kelas</th>
-                                                <th width="20%">Mata Pelajaran</th>
-                                                <th width="10%" class="text-center">Total Siswa</th>
-                                                <th width="8%" class="text-center">Hadir</th>
-                                                <th width="8%" class="text-center">Sakit</th>
-                                                <th width="8%" class="text-center">Izin</th>
-                                                <th width="8%" class="text-center">Alpa</th>
-                                                <th width="10%" class="text-center">Kehadiran</th>
-                                                <th width="6%" class="text-center">Aksi</th>
+                                                <th width="10%">Tanggal</th>
+                                                <th width="10%">Kelas</th>
+                                                <th width="15%">Mata Pelajaran</th>
+                                                <th width="8%" class="text-center">Total</th>
+                                                <th width="6%" class="text-center">Hadir</th>
+                                                <th width="6%" class="text-center">Sakit</th>
+                                                <th width="6%" class="text-center">Izin</th>
+                                                <th width="6%" class="text-center">Alpa</th>
+                                                <th width="8%" class="text-center">Kehadiran</th>
+                                                <th width="20%" class="text-center">Status & Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -270,25 +322,92 @@
                                                             </div>
                                                         </div>
                                                     </td>
+
+                                                    {{-- ✅ KOLOM STATUS & AKSI DENGAN WORKFLOW --}}
                                                     <td class="text-center">
-                                                        <div class="btn-group" role="group">
-                                                            <a href="{{ route('guru.absensi.show', $absen->id) }}" class="btn btn-sm btn-info" title="Detail">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <a href="{{ route('guru.absensi.edit', $absen->id) }}" class="btn btn-sm btn-warning" title="Edit">
-                                                                <i class="fas fa-edit"></i>
-                                                            </a>
-                                                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ $absen->id }})"
-                                                                title="Hapus">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                        {{-- Status Badge --}}
+                                                        <div class="mb-2">
+                                                            <span class="badge bg-{{ $absen->status_badge_color }}">
+                                                                {{ $absen->status_text }}
+                                                            </span>
                                                         </div>
 
-                                                        <form id="delete-form-{{ $absen->id }}" action="{{ route('guru.absensi.destroy', $absen->id) }}"
-                                                            method="POST" class="d-none">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                        </form>
+                                                        {{-- Button Workflow --}}
+                                                        @php
+                                                            $buttonAction = $absen->getButtonAction($guru);
+                                                        @endphp
+
+                                                        @if($absen->canEdit())
+                                                            {{-- Button Workflow berdasarkan status --}}
+                                                            @if($buttonAction['action'] === 'selesaikan_langsung')
+                                                                {{-- Wali Kelas - Button Selesai Langsung --}}
+                                                                <form action="{{ route('guru.absensi.selesaikan-langsung', $absen->id) }}"
+                                                                      method="POST"
+                                                                      class="d-inline"
+                                                                      onsubmit="return confirm('Selesaikan absen ini? Data akan masuk ke rekapan dan tidak bisa diubah lagi.')">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm btn-{{ $buttonAction['color'] }} mb-1 w-100">
+                                                                        <i class="fas fa-check-circle me-1"></i> {{ $buttonAction['text'] }}
+                                                                    </button>
+                                                                </form>
+                                                            @elseif($buttonAction['action'] === 'kirim')
+                                                                {{-- Guru Mapel - Button Kirim ke Wali Kelas --}}
+                                                                <form action="{{ route('guru.absensi.kirim-wali-kelas', $absen->id) }}"
+                                                                      method="POST"
+                                                                      class="d-inline"
+                                                                      onsubmit="return confirm('Kirim absen ini ke wali kelas?')">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm btn-{{ $buttonAction['color'] }} mb-1 w-100">
+                                                                        <i class="fas fa-paper-plane me-1"></i> {{ $buttonAction['text'] }}
+                                                                    </button>
+                                                                </form>
+                                                            @elseif($buttonAction['action'] === 'disabled')
+                                                                {{-- Status Menunggu atau Sudah Selesai --}}
+                                                                <button type="button" class="btn btn-sm btn-{{ $buttonAction['color'] }} mb-1 w-100" disabled>
+                                                                    <i class="fas fa-clock me-1"></i> {{ $buttonAction['text'] }}
+                                                                </button>
+                                                            @endif
+
+                                                            {{-- Button Edit & Delete (hanya jika masih draft atau dikirim) --}}
+                                                            @if($absen->status_rekapan !== 'selesai')
+                                                                <div class="btn-group w-100" role="group">
+                                                                    <a href="{{ route('guru.absensi.show', $absen->id) }}"
+                                                                       class="btn btn-sm btn-info"
+                                                                       title="Detail">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </a>
+                                                                    <a href="{{ route('guru.absensi.edit', $absen->id) }}"
+                                                                       class="btn btn-sm btn-warning"
+                                                                       title="Edit">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </a>
+                                                                    <button type="button"
+                                                                            class="btn btn-sm btn-danger"
+                                                                            onclick="confirmDelete({{ $absen->id }})"
+                                                                            title="Hapus">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </div>
+
+                                                                <form id="delete-form-{{ $absen->id }}"
+                                                                      action="{{ route('guru.absensi.destroy', $absen->id) }}"
+                                                                      method="POST"
+                                                                      class="d-none">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                </form>
+                                                            @endif
+                                                        @else
+                                                            {{-- Jika sudah selesai, hanya tampilkan button lihat detail --}}
+                                                            <a href="{{ route('guru.absensi.show', $absen->id) }}"
+                                                               class="btn btn-sm btn-info w-100"
+                                                               title="Detail">
+                                                                <i class="fas fa-eye me-1"></i> Lihat Detail
+                                                            </a>
+                                                            <small class="text-muted d-block mt-2">
+                                                                <i class="fas fa-lock me-1"></i> Tidak bisa diubah
+                                                            </small>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -298,7 +417,7 @@
 
                                 {{-- Pagination --}}
                                 <div class="mt-3">
-                                    {{ $absensis->links() }}
+                                    {{ $absensis->appends(request()->except('page'))->links() }}
                                 </div>
                             </div>
                         </div>
@@ -314,18 +433,17 @@
                                     <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
                                     <h5 class="text-muted">Belum ada data absensi</h5>
                                     <p class="text-muted">
-                                        @if($tanggal || $kelas || $mapel)
+                                        @if($tanggal || $kelas || $mapel || ($statusFilter ?? ''))
                                             Tidak ada absensi yang sesuai dengan filter
                                         @else
                                             Silakan input absensi terlebih dahulu
                                         @endif
                                     </p>
-                                    @if($tanggal || $kelas || $mapel)
+                                    @if($tanggal || $kelas || $mapel || ($statusFilter ?? ''))
                                         <a href="{{ route('guru.absensi.index') }}" class="btn btn-primary mt-3">
                                             <i class="fas fa-redo me-1"></i> Reset Filter
                                         </a>
                                     @else
-                                        {{-- ✅ PERBAIKAN: Empty state button yang lebih baik --}}
                                         @if($guru->isWaliKelas() && $guru->isGuruMapel())
                                             <div class="btn-group mt-3" role="group">
                                                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -454,7 +572,6 @@
             padding: 0.375rem 0.5rem;
         }
 
-        /* ✅ TAMBAHAN: Style untuk dropdown menu */
         .dropdown-menu {
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -474,6 +591,12 @@
 
         .dropdown-divider {
             margin: 0.5rem 0;
+        }
+
+        /* ✅ Style untuk alert notifikasi */
+        .alert {
+            border: none;
+            border-radius: 12px;
         }
     </style>
 @endpush
@@ -515,6 +638,15 @@
                 icon: 'error',
                 title: 'Oops...',
                 text: '{{ session('error') }}',
+            });
+        @endif
+
+        // Show warning message
+        @if(session('warning'))
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian!',
+                text: '{{ session('warning') }}',
             });
         @endif
     </script>

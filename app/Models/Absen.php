@@ -14,6 +14,8 @@ class Absen extends Model
     protected $casts = [
         'tanggal' => 'date',
         'presentase_kehadiran' => 'decimal:2',
+        'dikirim_at' => 'datetime',
+        'diselesaikan_at' => 'datetime',
     ];
 
     /**
@@ -121,5 +123,252 @@ class Absen extends Model
         $tahun = $tahun ?? now()->year;
         return $query->whereYear('tanggal', $tahun)
             ->whereMonth('tanggal', $bulan);
+    }
+
+    /**
+     * Relasi ke Mapel
+     */
+    public function mapel()
+    {
+        return $this->belongsTo(Mapel::class, 'mapel_id');
+    }
+
+    /**
+     * Relasi ke Guru yang menyelesaikan (Wali Kelas)
+     */
+    public function diselesaikanOleh()
+    {
+        return $this->belongsTo(Guru::class, 'diselesaikan_oleh');
+    }
+
+    // ========== STATUS SCOPES ==========
+
+    /**
+     * Scope untuk status draft
+     */
+    public function scopeDraft($query)
+    {
+        return $query->where('status_rekapan', 'draft');
+    }
+
+    /**
+     * Scope untuk status dikirim
+     */
+    public function scopeDikirim($query)
+    {
+        return $query->where('status_rekapan', 'dikirim');
+    }
+
+    /**
+     * Scope untuk status selesai
+     */
+    public function scopeSelesai($query)
+    {
+        return $query->where('status_rekapan', 'selesai');
+    }
+
+    /**
+     * Scope untuk absen hari ini
+     */
+    public function scopeToday($query)
+    {
+        return $query->whereDate('tanggal', today());
+    }
+
+    /**
+     * Scope untuk absen yang menunggu persetujuan wali kelas
+     */
+    public function scopeMenungguWaliKelas($query, $kelasId)
+    {
+        return $query->where('kelas_id', $kelasId)
+            ->where('status_rekapan', 'dikirim');
+    }
+
+    // ========== WORKFLOW METHODS ==========
+
+    /**
+     * Check apakah ini absen dari wali kelas
+     */
+    public function isAbsenWaliKelas($guru): bool
+    {
+        if (!$guru->is_wali_kelas) {
+            return false;
+        }
+
+        // Cek apakah guru ini adalah wali kelas dari kelas ini
+        return $this->kelas && $this->kelas->wali_guru_id === $guru->id;
+    }
+
+    /**
+     * Check apakah bisa diedit
+     */
+    public function canEdit(): bool
+    {
+        return $this->status_rekapan !== 'selesai';
+    }
+
+    /**
+     * Check apakah bisa dikirim ke wali kelas
+     */
+    public function canKirim(): bool
+    {
+        return $this->status_rekapan === 'draft';
+    }
+
+    /**
+     * Check apakah bisa diselesaikan
+     */
+    public function canSelesai(): bool
+    {
+        return $this->status_rekapan === 'dikirim';
+    }
+
+    /**
+     * Kirim ke wali kelas
+     */
+    public function kirimKeWaliKelas(): void
+    {
+        if (!$this->canKirim()) {
+            throw new \Exception('Absen tidak dapat dikirim');
+        }
+
+        $this->status_rekapan = 'dikirim';
+        $this->dikirim_at = now();
+        $this->save();
+    }
+
+    /**
+     * Selesaikan absen (oleh wali kelas)
+     */
+    public function selesaikan($guru): void
+    {
+        // Validasi hanya wali kelas yang bisa menyelesaikan
+        if (!$this->isAbsenWaliKelas($guru)) {
+            throw new \Exception('Hanya wali kelas yang dapat menyelesaikan absen');
+        }
+
+        $this->status_rekapan = 'selesai';
+        $this->diselesaikan_at = now();
+        $this->diselesaikan_oleh = $guru->id;
+        $this->save();
+
+        // Trigger generate rekapan untuk semua siswa di kelas ini
+        $this->generateRekapanForKelas();
+    }
+
+    /**
+     * Langsung selesaikan (untuk wali kelas yang absen di kelasnya sendiri)
+     */
+    public function selesaikanLangsung($guru): void
+    {
+        if (!$this->isAbsenWaliKelas($guru)) {
+            throw new \Exception('Hanya wali kelas yang dapat menyelesaikan absen');
+        }
+
+        $this->status_rekapan = 'selesai';
+        $this->dikirim_at = now(); // Set juga dikirim_at
+        $this->diselesaikan_at = now();
+        $this->diselesaikan_oleh = $guru->id;
+        $this->save();
+
+        // Trigger generate rekapan untuk semua siswa di kelas ini
+        $this->generateRekapanForKelas();
+    }
+
+    /**
+     * Generate atau update rekapan untuk semua siswa di kelas
+     */
+    private function generateRekapanForKelas(): void
+    {
+        $siswaList = $this->kelas->siswas;
+
+        foreach ($siswaList as $siswa) {
+            // Cari atau buat rekapan untuk siswa ini
+            $rekapan = Rekapan::firstOrNew([
+                'siswa_id' => $siswa->id,
+                'tanggal' => $this->tanggal,
+            ]);
+
+            // Generate kehadiran
+            $rekapan->generateKehadiran();
+
+            // Generate perilaku jika belum ada
+            if (empty($rekapan->perilaku)) {
+                $rekapan->generatePerilaku();
+            }
+
+            $rekapan->save();
+        }
+    }
+
+    // ========== UI HELPERS ==========
+
+    /**
+     * Get status badge color untuk UI
+     */
+    public function getStatusBadgeColorAttribute(): string
+    {
+        return match ($this->status_rekapan) {
+            'selesai' => 'success',
+            'dikirim' => 'info',
+            'draft' => 'warning',
+            default => 'secondary'
+        };
+    }
+
+    /**
+     * Get status text untuk UI
+     */
+    public function getStatusTextAttribute(): string
+    {
+        return match ($this->status_rekapan) {
+            'selesai' => 'Selesai',
+            'dikirim' => 'Menunggu Wali Kelas',
+            'draft' => 'Draft',
+            default => 'Unknown'
+        };
+    }
+
+    /**
+     * Get button action untuk UI
+     */
+    public function getButtonAction($guru): array
+    {
+        // Jika wali kelas absen di kelasnya sendiri
+        if ($this->isAbsenWaliKelas($guru)) {
+            if ($this->status_rekapan === 'draft') {
+                return [
+                    'text' => 'Selesai',
+                    'color' => 'success',
+                    'action' => 'selesaikan_langsung',
+                    'disabled' => false
+                ];
+            }
+        } else {
+            // Guru mapel
+            if ($this->status_rekapan === 'draft') {
+                return [
+                    'text' => 'Kirim ke Wali Kelas',
+                    'color' => 'primary',
+                    'action' => 'kirim',
+                    'disabled' => false
+                ];
+            } elseif ($this->status_rekapan === 'dikirim') {
+                return [
+                    'text' => 'Menunggu Wali Kelas',
+                    'color' => 'secondary',
+                    'action' => 'disabled',
+                    'disabled' => true
+                ];
+            }
+        }
+
+        // Jika sudah selesai
+        return [
+            'text' => 'Sudah Selesai',
+            'color' => 'success',
+            'action' => 'disabled',
+            'disabled' => true
+        ];
     }
 }
