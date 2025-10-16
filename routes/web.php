@@ -12,11 +12,29 @@ use App\Http\Controllers\RekapanController;
 use App\Http\Controllers\SiswaGuruController;
 use App\Http\Controllers\SiswaWaliKelasController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        $user = Auth::user();
+
+        // Redirect berdasarkan role
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+            case 'guru':
+                return redirect()->route('guru.dashboard');
+            case 'orangtua':
+                return redirect()->route('orangtua.dashboard');
+            default:
+                return redirect()->route('dashboard');
+        }
+    }
+
+    return redirect()->route('login');
 });
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');
